@@ -166,17 +166,18 @@ body.edit-mode .he-zone.hid,body.edit-mode .hj-zone.hid{color:inherit!important;
 <div class="mob-page" id="mobPage">
   <div class="mob-logo">漢字 학습지</div>
   <div class="mob-sub">사진을 찍어 PC로 전송하세요</div>
-  <input type="file" id="mobCam" accept="image/*" capture="environment" style="display:none">
-  <input type="file" id="mobGal" accept="image/*" style="display:none">
   <div class="mob-btns">
-    <div class="mob-btn" onclick="document.getElementById('mobCam').click()">
+    <label class="mob-btn" for="mobCam">
       <span class="mob-icon">📷</span>
       <div><div>카메라로 촬영</div><div style="font-size:.72rem;color:var(--mute);font-weight:400">지금 바로 촬영</div></div>
-    </div>
-    <div class="mob-btn" onclick="document.getElementById('mobGal').click()">
+    </label>
+    <input type="file" id="mobCam" accept="image/*" capture="environment" style="display:none">
+
+    <label class="mob-btn" for="mobGal">
       <span class="mob-icon">🖼️</span>
       <div><div>갤러리에서 선택</div><div style="font-size:.72rem;color:var(--mute);font-weight:400">저장된 사진</div></div>
-    </div>
+    </label>
+    <input type="file" id="mobGal" accept="image/*" style="display:none">
   </div>
   <div class="mob-st" id="mobSt"></div>
 </div>
@@ -404,10 +405,29 @@ async function sendMob(file){
   const s=document.getElementById('mobSt');
   s.textContent='📤 전송 중...'; s.className='mob-st show';
   try{
-    const b64=await toB64(file);
-    const r=await fetch(`${PROXY}/upload/${sid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({base64:b64,mediaType:file.type||'image/jpeg'})});
-    if(r.ok){s.textContent='✅ 전송 완료!'; s.className='mob-st show ok';}
-    else throw new Error('서버 오류');
+    // 이미지 압축 (5MB 초과 시)
+    let b64=await toB64(file);
+    let mt=file.type||'image/jpeg';
+    // base64 크기 체크 (~4MB 이하로)
+    if(b64.length > 5*1024*1024){
+      const img=await new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.src=`data:${mt};base64,${b64}`; });
+      const cv=document.createElement('canvas');
+      const scale=Math.sqrt((4*1024*1024*0.75)/(b64.length*0.75));
+      cv.width=Math.floor(img.width*scale); cv.height=Math.floor(img.height*scale);
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      b64=cv.toDataURL('image/jpeg',0.85).split(',')[1];
+      mt='image/jpeg';
+    }
+    const r=await fetch(`${PROXY}/upload/${sid}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({base64:b64,mediaType:mt})
+    });
+    if(r.ok){s.textContent='✅ 전송 완료! PC에서 확인하세요.'; s.className='mob-st show ok';}
+    else{
+      const e=await r.json().catch(()=>({}));
+      throw new Error(e?.error||`서버 오류 (${r.status})`);
+    }
   }catch(e){s.textContent='❌ '+e.message; s.className='mob-st show err';}
 }
 
