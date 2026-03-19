@@ -572,7 +572,7 @@ async function extract(){
       // PDF → canvas image via PDF.js
       try{
         const converted=await pdfToImage(uploadedFile.base64);
-        imageBase64=converted.base64; imageMT='image/png';
+        imageBase64=converted.base64; imageMT=converted.mediaType||'image/jpeg';
       }catch(e){
         // fallback: send as document
         imageBase64=null;
@@ -886,9 +886,15 @@ async function pdfToImage(base64pdf){
   let y=0;
   for(const p of pages){ ctx.drawImage(p.canvas,0,y); y+=p.h; }
 
-  // Return base64
-  const dataUrl=out.toDataURL('image/png',0.92);
-  return {base64:dataUrl.split(',')[1]};
+  // Return base64 — compress if too large
+  let quality = 0.92;
+  let dataUrl = out.toDataURL('image/jpeg', quality);
+  // If still over 4.5MB, reduce quality
+  while(dataUrl.length * 0.75 > 4500000 && quality > 0.4){
+    quality -= 0.1;
+    dataUrl = out.toDataURL('image/jpeg', quality);
+  }
+  return {base64:dataUrl.split(',')[1], mediaType:'image/jpeg'};
 }
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
