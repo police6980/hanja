@@ -147,10 +147,11 @@ body.edit-mode .he-zone.hid,body.edit-mode .hj-zone.hid{color:inherit!important;
 .mob-st.ok{background:#d4edda;color:#155724}
 .mob-st.err{background:#f8d7da;color:#721c24}
 @media print{
-  header,.no-print{display:none!important}
+  header,.no-print,#secUp{display:none!important}
   body{background:#fff}
   main{max-width:100%;padding:0;margin:0}
-  .sec{display:block!important}
+  .sec{display:none!important}
+  #secWs{display:block!important}
   .card{border:none;box-shadow:none;padding:0;background:#fff}
   .ws-wrap{overflow:visible}
   table.wst th{background:#1a1a2e!important;color:#c9a227!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
