@@ -388,7 +388,8 @@ body.edit-mode .he-zone.hid,body.edit-mode .hj-zone.hid{background:rgba(41,128,1
 <script>
 const PROXY = 'https://vocab-proxy.police6980.workers.dev';
 const LS_KEY = 'vocabApiKey';
-const MODEL  = 'claude-haiku-4-5-20251001';
+const MODEL_EXTRACT = 'claude-sonnet-4-6'; // 추출용: 고성능
+const MODEL  = 'claude-haiku-4-5-20251001'; // 기타용
 const COLS   = 6;
 
 let data = [];          // [{hanja,hun,eum,level}, ...]
@@ -544,18 +545,17 @@ async function extract(){
   if(!uploadedFile){showToast('파일을 업로드해 주세요.','err');return;}
   setProg(true,5,'Claude API 연결 중...');
   try{
-    // Better prompt - ask for ALL characters and use streaming-friendly format
-    const prompt=`이 이미지/PDF에는 한자 학습 자료가 있습니다.
-표 안에 있는 모든 한자를 빠짐없이 전부 추출해주세요.
+    const prompt=`이 이미지/PDF는 한자 학습지입니다. 이미지가 회전되어 있을 수 있습니다(90도, 180도 등) — 어떤 방향이든 모든 한자를 인식하세요.
 
-반드시 아래 형식의 JSON 배열만 반환하세요 (다른 텍스트 없이):
-[{"hanja":"山","hun":"뫼","eum":"산","level":"8"},{"hanja":"水","hun":"물","eum":"수","level":"8"},...]
+표 안에 있는 한자를 전부 찾아서 아래 JSON 배열 형식으로만 반환하세요:
+[{"hanja":"山","hun":"뫼","eum":"산","level":"8"},...]
 
-규칙:
-- 이미지에 보이는 모든 한자를 빠짐없이 추출
-- hun: 한글 뜻(훈), eum: 한글 읽기(음)
-- level: 급수(숫자만, 모르면 "")
-- 반드시 JSON 배열로만 응답`;
+중요 규칙:
+1. 이미지에 보이는 한자를 단 하나도 빠뜨리지 말고 모두 추출
+2. hanja: 한자 원문 그대로, hun: 훈(뜻), eum: 음(읽기), level: 급수
+3. 훈/음이 한자 위나 아래에 작게 적혀있으면 그걸 사용
+4. JSON 배열 외 다른 텍스트는 절대 출력하지 마세요
+5. 이미지를 여러 번 스캔해서 누락 없이 추출하세요`;
 
     setProg(true,40,'이미지 분석 중...');
     const isImg=uploadedFile.mediaType.startsWith('image/');
@@ -566,7 +566,7 @@ async function extract(){
     const resp=await fetch(`${PROXY}/v1/messages`,{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':ak},
-      body:JSON.stringify({model:MODEL,max_tokens:8192,messages:[{role:'user',content:[cb,{type:'text',text:prompt}]}]})
+      body:JSON.stringify({model:MODEL_EXTRACT,max_tokens:8192,messages:[{role:'user',content:[cb,{type:'text',text:prompt}]}]})
     });
     setProg(true,85,'응답 처리 중...');
     if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${resp.status}`);}
