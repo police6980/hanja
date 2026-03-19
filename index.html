@@ -545,11 +545,13 @@ async function extract(){
   if(!uploadedFile){showToast('파일을 업로드해 주세요.','err');return;}
   setProg(true,5,'이미지 변환 중...');
   try{
-    // ── 이미지 준비 ──
+    // ── 이미지 준비 + 선명도 강화 ──
     const isImg=uploadedFile.mediaType.startsWith('image/');
     let imageBase64, imageMT;
     if(isImg){
-      imageBase64=uploadedFile.base64; imageMT=uploadedFile.mediaType;
+      // 이미지도 선명도 강화
+      const enhanced = await enhanceImage(uploadedFile.base64, uploadedFile.mediaType);
+      imageBase64=enhanced.base64; imageMT=enhanced.mediaType;
     } else {
       try{
         const cv=await pdfToImage(uploadedFile.base64);
@@ -560,22 +562,31 @@ async function extract(){
       ?{type:'image',source:{type:'base64',media_type:imageMT,data:imageBase64}}
       :{type:'document',source:{type:'base64',media_type:'application/pdf',data:uploadedFile.base64}};
 
-    // ══════════════════════════════════════
-    // 1차 호출: 한글만 읽기
-    // ══════════════════════════════════════
-    setProg(true,20,'1단계: 한글 훈/음 읽는 중...');
-    const prompt1=`이 이미지는 한자 학습지입니다. 이미지가 회전되어 있을 수 있습니다.
+    // ══════════════════════════════════════════════════
+    // 1단계: 행번호 + 열(1~6) + 한글훈 + 한글음 + 급수 읽기
+    // 위치 정보까지 읽어서 순서 오류 방지
+    // ══════════════════════════════════════════════════
+    setProg(true,20,'1단계: 표 구조 읽는 중...');
+    const prompt1=`이 이미지는 한자 학습지 표입니다.
 
-각 칸의 구조: 위쪽 작은 글씨 = 한글(훈+음), 아래쪽 큰 글씨 = 한자
+표 구조:
+- 맨 왼쪽 열: 행 번호 범위 (예: 1~6, 7~12)
+- 가운데 6개 열(①~⑥): 각 칸에 위쪽 작은 한글(훈+음) + 아래쪽 큰 한자
+- 맨 오른쪽 열: 급수 숫자
 
-지금은 한자는 무시하고, 위쪽의 작은 한글 글씨만 모두 읽으세요.
-표의 순서대로(왼쪽→오른쪽, 위→아래) 한글을 읽고, 급수(오른쪽 끝 열)도 읽으세요.
+지금 할 일: 표의 각 칸에서 위쪽 작은 한글만 읽으세요. 한자는 무시.
+행번호와 열번호(1~6)도 함께 기록하세요.
 
-JSON 배열로만 반환 (다른 텍스트 없이):
-[{"hun":"뫼","eum":"산","level":"8"},{"hun":"물","eum":"수","level":"8"},...]
+JSON 배열로만 반환:
+[{"row":1,"col":1,"hun":"뫼","eum":"산","level":"8"},{"row":1,"col":2,"hun":"물","eum":"수","level":"8"},...]
 
-- hun: 훈(뜻) 한글, eum: 음(읽기) 한글, level: 급수(없으면 "")
-- JSON 외 다른 텍스트 절대 금지`;
+규칙:
+- row: 해당 칸이 속한 행그룹의 시작번호 (1, 7, 13, 19...)
+- col: 열 번호 1~6
+- hun: 훈(뜻) 한글만, eum: 음(읽기) 한글만
+- level: 오른쪽 급수 열 값 (행 전체 공유)
+- JSON 배열 외 다른 텍스트 절대 금지
+- 빈 칸은 포함하지 말 것`;
 
     const r1=await fetch(`${PROXY}/v1/messages`,{
       method:'POST',
@@ -585,32 +596,46 @@ JSON 배열로만 반환 (다른 텍스트 없이):
     if(!r1.ok){const e=await r1.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${r1.status}`);}
     const d1=await r1.json();
     const txt1=d1.content?.map(b=>b.text||'').join('')||'';
-    let korList=[];
-    const m1=txt1.match(/\[[\s\S]*\]/);
-    if(m1){try{korList=JSON.parse(m1[0]);}catch{}}
-    if(!korList.length) throw new Error('한글 읽기 실패. 이미지를 확인하세요.');
-    setProg(true,55,`${korList.length}개 한글 읽음. 2단계: 한자 생성 중...`);
+    let step1List=[];
+    const m1=txt1.match(/\[[\s\S]*?\]/);
+    if(m1){try{step1List=JSON.parse(m1[0]);}catch{}}
+    if(!step1List.length) throw new Error('표 읽기 실패. 이미지를 확인하세요.');
 
-    // ══════════════════════════════════════
-    // 2차 호출: 한글 → 한자 생성 (이미지 없이)
-    // ══════════════════════════════════════
-    const korText=korList.map((k,i)=>`${i+1}. 훈: ${k.hun||''}, 음: ${k.eum||''}`).join('\n');
+    // row+col 순서로 정렬
+    step1List.sort((a,b)=> a.row!==b.row ? a.row-b.row : a.col-b.col);
+    setProg(true,55,`${step1List.length}개 항목 읽음. 2단계: 한자 확정 중...`);
+
+    // ══════════════════════════════════════════════════
+    // 2단계: 훈+음 → 정확한 한자 확정 (이미지 없이, 지식으로)
+    // ══════════════════════════════════════════════════
+    const listText = step1List.map((k,i)=>
+      `${i+1}. 훈="${k.hun||''}" 음="${k.eum||''}"`
+    ).join('\n');
+
     const prompt2=`아래는 한자 학습지에서 읽은 훈(뜻)과 음(읽기) 목록입니다.
-각 항목의 훈+음에 정확히 대응하는 한자를 찾아주세요.
-이미지를 보지 말고, 훈과 음의 의미로만 한자를 확정하세요.
+각 항목에 대해 훈+음에 정확히 대응하는 한자를 한국 한자 교육 기준으로 확정해주세요.
+이미지는 보지 말고 오직 훈과 음의 의미만으로 판단하세요.
 
-${korText}
+${listText}
+
+예시:
+- 훈"뫼" 음"산" → 山
+- 훈"물" 음"수" → 水  
+- 훈"그림" 음"화" → 畵
+- 훈"움직일" 음"동" → 動
+- 훈"하나" 음"일" → 一
+- 훈"길" 음"도" → 道
 
 JSON 배열로만 반환 (다른 텍스트 없이):
 [{"hanja":"山","hun":"뫼","eum":"산","level":"8"},...]
 
-규칙:
-- 훈+음 조합으로 한자를 100% 확정 (예: 훈"뫼"+음"산" → 山)
-- level은 아래 원본 데이터에서 그대로 사용
-- JSON 외 다른 텍스트 절대 금지
+원본 데이터(level, row, col 참고):
+${JSON.stringify(step1List)}
 
-원본 데이터(level 참고용):
-${JSON.stringify(korList)}`;
+규칙:
+- 훈+음으로 한자를 100% 확정할 것
+- level은 원본 데이터에서 그대로 사용
+- JSON 외 텍스트 절대 금지`;
 
     const r2=await fetch(`${PROXY}/v1/messages`,{
       method:'POST',
@@ -621,13 +646,13 @@ ${JSON.stringify(korList)}`;
     const d2=await r2.json();
     const txt2=d2.content?.map(b=>b.text||'').join('')||'';
     let parsed=[];
-    const m2=txt2.match(/\[[\s\S]*\]/);
+    const m2=txt2.match(/\[[\s\S]*?\]/);
     if(m2){try{parsed=JSON.parse(m2[0]);}catch{}}
-    if(!Array.isArray(parsed)||!parsed.length) throw new Error('한자 생성 실패.');
+    if(!Array.isArray(parsed)||!parsed.length) throw new Error('한자 확정 실패.');
 
     setProg(true,100,`${parsed.length}개 완료!`);
     data=parsed.map(h=>({hanja:h.hanja||'',hun:h.hun||'',eum:h.eum||'',level:String(h.level||'')}));
-    setTimeout(()=>{setProg(false);renderWS();showSec('secWs');showToast(`${data.length}개 한자를 추출했습니다.`,'ok');},600);
+    setTimeout(()=>{setProg(false);renderWS();showSec('secWs');showToast(`✅ ${data.length}개 한자 추출 완료!`,'ok');},600);
   }catch(e){setProg(false);showToast('추출 실패: '+e.message,'err');}
 }
 function setProg(show,val,txt){
@@ -872,6 +897,33 @@ function copyWorker(){navigator.clipboard.writeText(document.getElementById('wor
 // ── TOAST ──
 let toastT=null;
 function showToast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast show ${type}`;if(toastT)clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ── IMAGE ENHANCE (대비/선명도 강화) ──
+async function enhanceImage(base64, mediaType){
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      canvas.width=img.width; canvas.height=img.height;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0);
+      // 대비 강화
+      const id=ctx.getImageData(0,0,canvas.width,canvas.height);
+      const d=id.data;
+      for(let i=0;i<d.length;i+=4){
+        // 명도 계산
+        const avg=(d[i]+d[i+1]+d[i+2])/3;
+        // 임계값 이분법: 밝으면 더 밝게, 어두우면 더 어둡게
+        const v=avg>128?Math.min(255,avg*1.2):Math.max(0,avg*0.8);
+        d[i]=d[i+1]=d[i+2]=v;
+      }
+      ctx.putImageData(id,0,0);
+      const dataUrl=canvas.toDataURL('image/jpeg',0.92);
+      res({base64:dataUrl.split(',')[1],mediaType:'image/jpeg'});
+    };
+    img.src=`data:${mediaType};base64,${base64}`;
+  });
+}
 
 // ── PDF → IMAGE ──
 async function pdfToImage(base64pdf){
