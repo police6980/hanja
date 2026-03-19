@@ -557,10 +557,23 @@ async function extract(){
 4. JSON 배열 외 다른 텍스트는 절대 출력하지 마세요
 5. 이미지를 여러 번 스캔해서 누락 없이 추출하세요`;
 
-    setProg(true,40,'이미지 분석 중...');
+    setProg(true,40,'이미지 변환 중...');
     const isImg=uploadedFile.mediaType.startsWith('image/');
-    const cb=isImg
-      ?{type:'image',source:{type:'base64',media_type:uploadedFile.mediaType,data:uploadedFile.base64}}
+    let imageBase64, imageMT;
+    if(isImg){
+      imageBase64=uploadedFile.base64; imageMT=uploadedFile.mediaType;
+    } else {
+      // PDF → canvas image via PDF.js
+      try{
+        const converted=await pdfToImage(uploadedFile.base64);
+        imageBase64=converted.base64; imageMT='image/png';
+      }catch(e){
+        // fallback: send as document
+        imageBase64=null;
+      }
+    }
+    const cb=imageBase64
+      ?{type:'image',source:{type:'base64',media_type:imageMT,data:imageBase64}}
       :{type:'document',source:{type:'base64',media_type:'application/pdf',data:uploadedFile.base64}};
     setProg(true,60,'한자 추출 중...');
     const resp=await fetch(`${PROXY}/v1/messages`,{
@@ -828,6 +841,49 @@ function copyWorker(){navigator.clipboard.writeText(document.getElementById('wor
 // ── TOAST ──
 let toastT=null;
 function showToast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast show ${type}`;if(toastT)clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ── PDF → IMAGE ──
+async function pdfToImage(base64pdf){
+  // Load PDF.js if not loaded
+  if(!window.pdfjsLib){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+      s.onload=res; s.onerror=rej;
+      document.head.appendChild(s);
+    });
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+  }
+  const bin=atob(base64pdf);
+  const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  const pdf=await window.pdfjsLib.getDocument({data:arr}).promise;
+
+  // Render all pages onto one tall canvas
+  const pages=[];
+  for(let i=1;i<=pdf.numPages;i++){
+    const page=await pdf.getPage(i);
+    const vp=page.getViewport({scale:2.0}); // 2x for quality
+    const canvas=document.createElement('canvas');
+    canvas.width=vp.width; canvas.height=vp.height;
+    await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+    pages.push({canvas,w:vp.width,h:vp.height});
+  }
+
+  // Combine pages vertically
+  const totalH=pages.reduce((s,p)=>s+p.h,0);
+  const maxW=Math.max(...pages.map(p=>p.w));
+  const out=document.createElement('canvas');
+  out.width=maxW; out.height=totalH;
+  const ctx=out.getContext('2d');
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,maxW,totalH);
+  let y=0;
+  for(const p of pages){ ctx.drawImage(p.canvas,0,y); y+=p.h; }
+
+  // Return base64
+  const dataUrl=out.toDataURL('image/png',0.92);
+  return {base64:dataUrl.split(',')[1]};
+}
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 </script>
