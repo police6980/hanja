@@ -543,64 +543,89 @@ async function extract(){
   const ak=localStorage.getItem(LS_KEY)||'';
   if(!ak){showToast('API 키를 입력해 주세요.','err');return;}
   if(!uploadedFile){showToast('파일을 업로드해 주세요.','err');return;}
-  setProg(true,5,'Claude API 연결 중...');
+  setProg(true,5,'이미지 변환 중...');
   try{
-    const prompt=`이 이미지는 한자 학습지입니다. 이미지가 회전되어 있을 수 있으니 어떤 방향이든 인식하세요.
-
-각 칸의 구조: 위쪽 작은 글씨 = 한글 훈(뜻)+음(읽기), 아래쪽 큰 글씨 = 한자
-
-**추출 방법 (이 순서대로):**
-1단계: 각 칸의 위쪽 작은 한글을 먼저 읽는다 (예: "뫼 산", "물 수", "불 화")
-2단계: 읽은 훈+음에 정확히 대응하는 올바른 한자를 생성한다 (이미지의 한자 자형은 참고만 할 것)
-3단계: 모든 칸을 빠짐없이 처리한다
-
-**핵심:** 한자는 이미지에서 OCR하지 말고, 한글 훈/음으로부터 올바른 한자를 직접 도출하세요.
-예) "뫼 산" → 山, "물 수" → 水, "이첨 인" → 仁, "반 반" → 半
-
-아래 JSON 형식으로만 반환 (다른 텍스트 없이):
-[{"hanja":"山","hun":"뫼","eum":"산","level":"8"},...]
-
-- level: 표에 급수가 적혀있으면 사용, 없으면 ""
-- JSON 외 다른 텍스트 출력 금지`;
-
-    setProg(true,40,'이미지 변환 중...');
+    // ── 이미지 준비 ──
     const isImg=uploadedFile.mediaType.startsWith('image/');
     let imageBase64, imageMT;
     if(isImg){
       imageBase64=uploadedFile.base64; imageMT=uploadedFile.mediaType;
     } else {
-      // PDF → canvas image via PDF.js
       try{
-        const converted=await pdfToImage(uploadedFile.base64);
-        imageBase64=converted.base64; imageMT=converted.mediaType||'image/jpeg';
-      }catch(e){
-        // fallback: send as document
-        imageBase64=null;
-      }
+        const cv=await pdfToImage(uploadedFile.base64);
+        imageBase64=cv.base64; imageMT=cv.mediaType||'image/jpeg';
+      }catch(e){ imageBase64=null; }
     }
-    const cb=imageBase64
+    const imgBlock=imageBase64
       ?{type:'image',source:{type:'base64',media_type:imageMT,data:imageBase64}}
       :{type:'document',source:{type:'base64',media_type:'application/pdf',data:uploadedFile.base64}};
-    setProg(true,60,'한자 추출 중...');
-    const resp=await fetch(`${PROXY}/v1/messages`,{
+
+    // ══════════════════════════════════════
+    // 1차 호출: 한글만 읽기
+    // ══════════════════════════════════════
+    setProg(true,20,'1단계: 한글 훈/음 읽는 중...');
+    const prompt1=`이 이미지는 한자 학습지입니다. 이미지가 회전되어 있을 수 있습니다.
+
+각 칸의 구조: 위쪽 작은 글씨 = 한글(훈+음), 아래쪽 큰 글씨 = 한자
+
+지금은 한자는 무시하고, 위쪽의 작은 한글 글씨만 모두 읽으세요.
+표의 순서대로(왼쪽→오른쪽, 위→아래) 한글을 읽고, 급수(오른쪽 끝 열)도 읽으세요.
+
+JSON 배열로만 반환 (다른 텍스트 없이):
+[{"hun":"뫼","eum":"산","level":"8"},{"hun":"물","eum":"수","level":"8"},...]
+
+- hun: 훈(뜻) 한글, eum: 음(읽기) 한글, level: 급수(없으면 "")
+- JSON 외 다른 텍스트 절대 금지`;
+
+    const r1=await fetch(`${PROXY}/v1/messages`,{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':ak},
-      body:JSON.stringify({model:MODEL_EXTRACT,max_tokens:8192,messages:[{role:'user',content:[cb,{type:'text',text:prompt}]}]})
+      body:JSON.stringify({model:MODEL_EXTRACT,max_tokens:8192,messages:[{role:'user',content:[imgBlock,{type:'text',text:prompt1}]}]})
     });
-    setProg(true,85,'응답 처리 중...');
-    if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${resp.status}`);}
-    const d=await resp.json();
-    const txt=d.content?.map(b=>b.text||'').join('')||'';
+    if(!r1.ok){const e=await r1.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${r1.status}`);}
+    const d1=await r1.json();
+    const txt1=d1.content?.map(b=>b.text||'').join('')||'';
+    let korList=[];
+    const m1=txt1.match(/\[[\s\S]*\]/);
+    if(m1){try{korList=JSON.parse(m1[0]);}catch{}}
+    if(!korList.length) throw new Error('한글 읽기 실패. 이미지를 확인하세요.');
+    setProg(true,55,`${korList.length}개 한글 읽음. 2단계: 한자 생성 중...`);
+
+    // ══════════════════════════════════════
+    // 2차 호출: 한글 → 한자 생성 (이미지 없이)
+    // ══════════════════════════════════════
+    const korText=korList.map((k,i)=>`${i+1}. 훈: ${k.hun||''}, 음: ${k.eum||''}`).join('\n');
+    const prompt2=`아래는 한자 학습지에서 읽은 훈(뜻)과 음(읽기) 목록입니다.
+각 항목의 훈+음에 정확히 대응하는 한자를 찾아주세요.
+이미지를 보지 말고, 훈과 음의 의미로만 한자를 확정하세요.
+
+${korText}
+
+JSON 배열로만 반환 (다른 텍스트 없이):
+[{"hanja":"山","hun":"뫼","eum":"산","level":"8"},...]
+
+규칙:
+- 훈+음 조합으로 한자를 100% 확정 (예: 훈"뫼"+음"산" → 山)
+- level은 아래 원본 데이터에서 그대로 사용
+- JSON 외 다른 텍스트 절대 금지
+
+원본 데이터(level 참고용):
+${JSON.stringify(korList)}`;
+
+    const r2=await fetch(`${PROXY}/v1/messages`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':ak},
+      body:JSON.stringify({model:MODEL_EXTRACT,max_tokens:8192,messages:[{role:'user',content:[{type:'text',text:prompt2}]}]})
+    });
+    if(!r2.ok){const e=await r2.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${r2.status}`);}
+    const d2=await r2.json();
+    const txt2=d2.content?.map(b=>b.text||'').join('')||'';
     let parsed=[];
-    // Try to extract JSON array
-    const m=txt.match(/\[[\s\S]*\]/);
-    if(m){try{parsed=JSON.parse(m[0]);}catch{
-      // Try to fix truncated JSON
-      const partial=m[0].replace(/,\s*\{[^}]*$/, ']');
-      try{parsed=JSON.parse(partial);}catch{}
-    }}
-    if(!Array.isArray(parsed)||!parsed.length)throw new Error('추출 실패. 이미지를 확인하세요.');
-    setProg(true,100,`${parsed.length}개 추출!`);
+    const m2=txt2.match(/\[[\s\S]*\]/);
+    if(m2){try{parsed=JSON.parse(m2[0]);}catch{}}
+    if(!Array.isArray(parsed)||!parsed.length) throw new Error('한자 생성 실패.');
+
+    setProg(true,100,`${parsed.length}개 완료!`);
     data=parsed.map(h=>({hanja:h.hanja||'',hun:h.hun||'',eum:h.eum||'',level:String(h.level||'')}));
     setTimeout(()=>{setProg(false);renderWS();showSec('secWs');showToast(`${data.length}개 한자를 추출했습니다.`,'ok');},600);
   }catch(e){setProg(false);showToast('추출 실패: '+e.message,'err');}
@@ -850,7 +875,6 @@ function showToast(msg,type='ok'){const t=document.getElementById('toast');t.tex
 
 // ── PDF → IMAGE ──
 async function pdfToImage(base64pdf){
-  // Load PDF.js if not loaded
   if(!window.pdfjsLib){
     await new Promise((res,rej)=>{
       const s=document.createElement('script');
@@ -869,10 +893,12 @@ async function pdfToImage(base64pdf){
   const pages=[];
   for(let i=1;i<=pdf.numPages;i++){
     const page=await pdf.getPage(i);
-    const vp=page.getViewport({scale:3.0}); // 3x for better OCR quality
+    const vp=page.getViewport({scale:2.0});
     const canvas=document.createElement('canvas');
     canvas.width=vp.width; canvas.height=vp.height;
-    await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+    const ctx2d=canvas.getContext('2d');
+    ctx2d.fillStyle='#fff'; ctx2d.fillRect(0,0,vp.width,vp.height);
+    await page.render({canvasContext:ctx2d,viewport:vp}).promise;
     pages.push({canvas,w:vp.width,h:vp.height});
   }
 
@@ -886,13 +912,22 @@ async function pdfToImage(base64pdf){
   let y=0;
   for(const p of pages){ ctx.drawImage(p.canvas,0,y); y+=p.h; }
 
-  // Return base64 — compress if too large
-  let quality = 0.92;
+  // Return base64 — start JPEG 0.85, reduce until under 4MB
+  const MAX_BYTES = 4 * 1024 * 1024;
+  let quality = 0.85;
   let dataUrl = out.toDataURL('image/jpeg', quality);
-  // If still over 4.5MB, reduce quality
-  while(dataUrl.length * 0.75 > 4500000 && quality > 0.4){
-    quality -= 0.1;
+  while(dataUrl.length > MAX_BYTES * 1.37 && quality > 0.3){
+    quality = Math.max(0.3, quality - 0.15);
     dataUrl = out.toDataURL('image/jpeg', quality);
+  }
+  // If still too big, scale down the canvas
+  if(dataUrl.length > MAX_BYTES * 1.37){
+    const scale = Math.sqrt(MAX_BYTES * 1.37 / dataUrl.length);
+    const small = document.createElement('canvas');
+    small.width = Math.floor(out.width * scale);
+    small.height = Math.floor(out.height * scale);
+    small.getContext('2d').drawImage(out, 0, 0, small.width, small.height);
+    dataUrl = small.toDataURL('image/jpeg', 0.85);
   }
   return {base64:dataUrl.split(',')[1], mediaType:'image/jpeg'};
 }
