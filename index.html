@@ -359,6 +359,11 @@ const DEMO = [
 // ── INIT ──
 (function(){
   const sid = new URLSearchParams(location.search).get('upload');
+
+  // 모바일 이벤트 리스너는 항상 등록
+  document.getElementById('mobCam').addEventListener('change', e=>{ if(e.target.files[0]) sendMob(e.target.files[0]); });
+  document.getElementById('mobGal').addEventListener('change', e=>{ if(e.target.files[0]) sendMob(e.target.files[0]); });
+
   if(sid){ showMobPage(sid); return; }
   const k = localStorage.getItem('geminiApiKey')||'';
   document.getElementById('keyGemini').value = k;
@@ -470,18 +475,24 @@ async function showQR(){
   pollIv=setInterval(async()=>{
     try{
       const r=await fetch(`${PROXY}/poll/${pollSid}`);
-      if(r.ok){ const d=await r.json(); if(d&&d.base64){
-        stopPoll();
-        uploadedFile={base64:d.base64,mediaType:d.mediaType||'image/jpeg',name:'모바일_촬영.jpg'};
-        document.getElementById('pollSt').textContent='✅ 수신!';
-        document.getElementById('pollSt').className='poll-st done';
-        document.getElementById('fname').textContent='모바일 촬영 이미지';
-        document.getElementById('fsize').textContent='';
-        document.getElementById('fthumb').innerHTML=`<img class="fthumb" src="data:${d.mediaType};base64,${d.base64}">`;
-        document.getElementById('fp').classList.add('show');
-        showToast('사진 수신 완료!','ok');
-      }}
-    }catch{}
+      const text=await r.text();
+      console.log('poll response:', text);
+      if(r.ok){
+        let d;
+        try{ d=JSON.parse(text); }catch(e){ console.error('JSON parse error',e); return; }
+        if(d&&d.base64){
+          stopPoll();
+          uploadedFile={base64:d.base64,mediaType:d.mediaType||'image/jpeg',name:'모바일_촬영.jpg'};
+          document.getElementById('pollSt').textContent='✅ 수신!';
+          document.getElementById('pollSt').className='poll-st done';
+          document.getElementById('fname').textContent='모바일 촬영 이미지';
+          document.getElementById('fsize').textContent='';
+          document.getElementById('fthumb').innerHTML=`<img class="fthumb" src="data:${d.mediaType};base64,${d.base64}">`;
+          document.getElementById('fp').classList.add('show');
+          showToast('사진 수신 완료!','ok');
+        }
+      }
+    }catch(e){ console.error('poll error',e); }
   },2500);
 }
 function hideQR(){ stopPoll(); document.getElementById('qrArea').classList.remove('show'); }
