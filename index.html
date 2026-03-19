@@ -4,711 +4,764 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>한자 학습지 생성기</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #fdf6e3;
-  --header-bg: #1a1a2e;
-  --gold: #c9a227;
-  --gold-light: #e8c547;
-  --text: #2c2416;
-  --text-light: #6b5d4a;
-  --card-bg: #fff8f0;
-  --border: #d4c4a0;
-  --border-light: #e8dcc8;
-  --danger: #c0392b;
-  --success: #27ae60;
-  --shadow: 0 2px 12px rgba(44,36,22,0.10);
-  --radius: 10px;
+:root{
+  --bg:#fdf6e3; --hd:#1a1a2e; --gold:#c9a227; --gold2:#e8c547;
+  --text:#2c2416; --mute:#6b5d4a; --card:#fff8f0;
+  --br:#d4c4a0; --brl:#e8dcc8; --red:#c0392b; --grn:#27ae60;
+  --sh:0 2px 12px rgba(44,36,22,.10); --r:10px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
-header { background: var(--header-bg); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 60px; box-shadow: 0 2px 10px rgba(0,0,0,0.4); position: sticky; top: 0; z-index: 100; }
-.logo { display: flex; align-items: center; gap: 10px; font-family: 'Noto Serif KR', serif; color: var(--gold); font-size: 1.2rem; font-weight: 700; }
-.logo-icon { width: 36px; height: 36px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--header-bg); font-weight: 700; }
-.header-actions { display: flex; gap: 8px; }
-.btn-icon { background: none; border: 1px solid rgba(201,162,39,0.4); color: var(--gold); border-radius: 6px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; }
-.btn-icon:hover { background: rgba(201,162,39,0.15); }
+/* HEADER */
+header{background:var(--hd);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Noto Serif KR',serif;color:var(--gold);font-size:1.15rem;font-weight:700}
+.logo-icon{width:34px;height:34px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--hd);font-weight:700}
+.hdr-btns{display:flex;gap:6px}
+.hbtn{background:none;border:1px solid rgba(201,162,39,.4);color:var(--gold);border-radius:6px;padding:5px 11px;font-size:.78rem;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .2s}
+.hbtn:hover{background:rgba(201,162,39,.15)}
 
-main { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
+main{max-width:1020px;margin:0 auto;padding:20px 14px}
 
-.steps { display: flex; align-items: center; margin-bottom: 24px; background: var(--card-bg); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 12px 20px; }
-.step { display: flex; align-items: center; gap: 8px; flex: 1; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background 0.2s; }
-.step:hover { background: rgba(201,162,39,0.08); }
-.step-num { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--text-light); flex-shrink: 0; transition: all 0.3s; }
-.step-label { font-size: 0.82rem; color: var(--text-light); font-weight: 500; }
-.step.active .step-num { background: var(--gold); border-color: var(--gold); color: #fff; }
-.step.active .step-label { color: var(--text); font-weight: 700; }
-.step.done .step-num { background: var(--success); border-color: var(--success); color: #fff; }
-.step-sep { width: 24px; height: 2px; background: var(--border-light); flex-shrink: 0; }
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--brl);border-radius:var(--r);padding:20px;margin-bottom:16px;box-shadow:var(--sh)}
+.card-title{font-family:'Noto Serif KR',serif;font-size:1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title::before{content:'';display:inline-block;width:4px;height:17px;background:var(--gold);border-radius:2px}
 
-.card { background: var(--card-bg); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); }
-.card-title { font-family: 'Noto Serif KR', serif; font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-.card-title::before { content: ''; display: inline-block; width: 4px; height: 18px; background: var(--gold); border-radius: 2px; }
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 18px;border-radius:7px;font-size:.85rem;font-weight:600;cursor:pointer;border:none;font-family:'Noto Sans KR',sans-serif;transition:all .2s}
+.btn-g{background:var(--gold);color:var(--hd)}.btn-g:hover{background:var(--gold2);transform:translateY(-1px)}
+.btn-o{background:transparent;color:var(--gold);border:1.5px solid var(--gold)}.btn-o:hover{background:rgba(201,162,39,.08)}
+.btn-r{background:transparent;color:var(--red);border:1.5px solid var(--red)}.btn-r:hover{background:rgba(192,57,43,.08)}
+.btn-sm{padding:5px 11px;font-size:.78rem}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
 
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 7px; font-size: 0.88rem; font-weight: 600; cursor: pointer; border: none; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; }
-.btn-primary { background: var(--gold); color: var(--header-bg); }
-.btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(201,162,39,0.35); }
-.btn-secondary { background: transparent; color: var(--gold); border: 1.5px solid var(--gold); }
-.btn-secondary:hover { background: rgba(201,162,39,0.08); }
-.btn-danger { background: transparent; color: var(--danger); border: 1.5px solid var(--danger); }
-.btn-danger:hover { background: rgba(192,57,43,0.08); }
-.btn-sm { padding: 6px 12px; font-size: 0.8rem; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+/* UPLOAD */
+.upload-area{border:2.5px dashed var(--br);border-radius:var(--r);padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-area:hover,.upload-area.over{border-color:var(--gold);background:rgba(201,162,39,.05)}
+.up-icon{font-size:2.4rem;margin-bottom:10px}
+.up-title{font-size:.95rem;font-weight:600;margin-bottom:5px}
+.up-hint{font-size:.78rem;color:var(--mute)}
+.up-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+@media(max-width:560px){.up-methods{grid-template-columns:1fr}}
+.mth{background:var(--card);border:1.5px solid var(--br);border-radius:8px;padding:12px;cursor:pointer;text-align:center;transition:all .2s;font-family:'Noto Sans KR',sans-serif}
+.mth:hover{border-color:var(--gold);background:rgba(201,162,39,.05)}
+.mth-icon{font-size:1.5rem;display:block;margin-bottom:5px}
+.mth-label{font-size:.8rem;font-weight:600}
+.mth-sub{font-size:.72rem;color:var(--mute)}
 
-.upload-area { border: 2.5px dashed var(--border); border-radius: var(--radius); padding: 44px 20px; text-align: center; cursor: pointer; transition: all 0.2s; }
-.upload-area:hover, .upload-area.drag-over { border-color: var(--gold); background: rgba(201,162,39,0.06); }
-.upload-icon { font-size: 2.8rem; margin-bottom: 12px; }
-.upload-title { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
-.upload-hint { font-size: 0.82rem; color: var(--text-light); }
-.upload-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-@media(max-width:640px){ .upload-methods { grid-template-columns: 1fr; } }
-.method-btn { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 14px 16px; cursor: pointer; text-align: center; transition: all 0.2s; font-family: 'Noto Sans KR', sans-serif; }
-.method-btn:hover { border-color: var(--gold); background: rgba(201,162,39,0.06); }
-.method-icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
-.method-label { font-size: 0.82rem; font-weight: 600; }
-.method-sub { font-size: 0.75rem; color: var(--text-light); }
+/* QR */
+.qr-area{display:none;flex-direction:column;align-items:center;gap:10px;padding:14px;background:#fff;border:1px solid var(--brl);border-radius:var(--r);margin-top:12px}
+.qr-area.show{display:flex}
+.poll-st{font-size:.78rem;padding:5px 11px;border-radius:20px;font-weight:600}
+.poll-st.w{background:#fff3cd;color:#856404}
+.poll-st.ok{background:#d4edda;color:#155724}
 
-.qr-area { display: none; flex-direction: column; align-items: center; gap: 12px; padding: 16px; background: #fff; border: 1px solid var(--border-light); border-radius: var(--radius); }
-.qr-area.show { display: flex; }
-.poll-status { font-size: 0.8rem; padding: 6px 12px; border-radius: 20px; font-weight: 600; }
-.poll-status.waiting { background: #fff3cd; color: #856404; }
-.poll-status.received { background: #d4edda; color: #155724; }
+/* FILE PREVIEW */
+.fp{display:none;align-items:center;gap:10px;padding:12px;background:rgba(201,162,39,.05);border:1px solid var(--br);border-radius:8px;margin-top:10px}
+.fp.show{display:flex}
+.fthumb{width:52px;height:52px;object-fit:cover;border-radius:5px;border:1px solid var(--br)}
+.fthumb-pdf{width:52px;height:52px;background:#e74c3c;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.72rem;font-weight:700}
+.finfo{flex:1}
+.fname{font-size:.85rem;font-weight:600}
+.fsize{font-size:.75rem;color:var(--mute)}
 
-.file-preview { display: none; align-items: center; gap: 12px; padding: 14px; background: rgba(201,162,39,0.06); border: 1px solid var(--border); border-radius: 8px; margin-top: 12px; }
-.file-preview.show { display: flex; }
-.file-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
-.file-thumb-pdf { width: 60px; height: 60px; background: #e74c3c; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.75rem; font-weight: 700; }
-.file-info { flex: 1; }
-.file-name { font-size: 0.88rem; font-weight: 600; }
-.file-size { font-size: 0.78rem; color: var(--text-light); }
+/* API */
+.api-row{display:flex;gap:7px;align-items:center}
+.api-row input{flex:1;padding:8px 11px;border:1.5px solid var(--br);border-radius:7px;font-family:monospace;font-size:.8rem;background:#fff;color:var(--text);transition:border-color .2s}
+.api-row input:focus{outline:none;border-color:var(--gold)}
+.api-st{font-size:.75rem;margin-top:4px}
+.api-st.ok{color:var(--grn)}.api-st.err{color:var(--red)}
 
-.api-row { display: flex; gap: 8px; align-items: center; }
-.api-row input { flex: 1; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 7px; font-family: monospace; font-size: 0.82rem; background: #fff; color: var(--text); transition: border-color 0.2s; }
-.api-row input:focus { outline: none; border-color: var(--gold); }
-.api-status { font-size: 0.78rem; margin-top: 4px; }
-.api-status.ok { color: var(--success); }
-.api-status.err { color: var(--danger); }
+/* PROGRESS */
+.prog-wrap{background:var(--brl);border-radius:8px;height:7px;overflow:hidden;margin:10px 0}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:8px;transition:width .4s ease;width:0}
+.prog-txt{font-size:.78rem;color:var(--mute);text-align:center}
 
-.progress-bar-wrap { background: var(--border-light); border-radius: 8px; height: 8px; overflow: hidden; margin: 12px 0; }
-.progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 8px; transition: width 0.4s ease; width: 0%; }
-.progress-text { font-size: 0.82rem; color: var(--text-light); text-align: center; }
+/* ═══════════════════════════
+   WORKSHEET  
+═══════════════════════════ */
+.ws-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.ws-title-inp{flex:1;min-width:160px;padding:7px 11px;border:1.5px solid var(--br);border-radius:7px;font-family:'Noto Serif KR',serif;font-size:.92rem;background:#fff;color:var(--text)}
+.ws-title-inp:focus{outline:none;border-color:var(--gold)}
+.ws-name-inp{width:120px;padding:7px 11px;border:1.5px solid var(--br);border-radius:7px;font-size:.82rem;background:#fff;color:var(--text)}
+.ws-name-inp:focus{outline:none;border-color:var(--gold)}
 
-.table-wrap { overflow-x: auto; }
-table.edit-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
-table.edit-table th { background: var(--header-bg); color: var(--gold); padding: 9px 10px; text-align: center; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
-table.edit-table td { padding: 6px; border-bottom: 1px solid var(--border-light); text-align: center; vertical-align: middle; }
-table.edit-table tr:hover td { background: rgba(201,162,39,0.04); }
-table.edit-table input[type="text"] { width: 100%; padding: 5px 7px; border: 1.5px solid transparent; border-radius: 5px; font-family: 'Noto Serif KR', serif; font-size: 0.88rem; background: transparent; color: var(--text); text-align: center; transition: all 0.15s; }
-table.edit-table input[type="text"]:focus { outline: none; border-color: var(--gold); background: #fff; box-shadow: 0 0 0 3px rgba(201,162,39,0.12); }
-.hanja-input { font-size: 1.3rem !important; }
+/* Mode toolbar */
+.toolbar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;padding:9px 13px;background:rgba(26,26,46,.05);border-radius:8px;border:1px solid var(--brl);margin-bottom:10px}
+.toolbar-label{font-size:.75rem;color:var(--mute);font-weight:600;margin-right:2px;white-space:nowrap}
+.tbtn{padding:5px 13px;border-radius:20px;font-size:.77rem;font-weight:600;cursor:pointer;border:1.5px solid var(--br);background:var(--card);font-family:'Noto Sans KR',sans-serif;transition:all .2s;color:var(--text);white-space:nowrap}
+.tbtn:hover{border-color:var(--gold);background:rgba(201,162,39,.08)}
+.tbtn.on{background:var(--hd);color:var(--gold);border-color:var(--hd)}
+.tbtn.edit-on{background:#2980b9;color:#fff;border-color:#2980b9}
+.tbtn.rst{border-color:var(--grn);color:var(--grn)}.tbtn.rst:hover{background:rgba(39,174,96,.08)}
+.tbtn-sep{width:1px;height:20px;background:var(--brl);flex-shrink:0}
+.tbtn-hint{font-size:.7rem;color:var(--mute)}
 
-/* ═══ PREVIEW / WORKSHEET ═══ */
-.preview-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-.preview-title-input { flex: 1; min-width: 180px; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 7px; font-family: 'Noto Serif KR', serif; font-size: 0.95rem; background: #fff; color: var(--text); }
-.preview-title-input:focus { outline: none; border-color: var(--gold); }
-.name-input { width: 130px; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 7px; font-size: 0.85rem; background: #fff; color: var(--text); }
-.name-input:focus { outline: none; border-color: var(--gold); }
+/* Worksheet wrap */
+.ws-wrap{overflow-x:auto}
+.ws-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;border-bottom:2.5px solid #1a1a2e;padding-bottom:5px}
+.ws-h-title{font-family:'Noto Serif KR',serif;font-size:1.1rem;font-weight:700}
+.ws-h-right{font-family:'Noto Sans KR',sans-serif;font-size:.82rem;display:flex;gap:14px}
+.ws-h-right .und{display:inline-block;width:80px;border-bottom:1.5px solid #333;margin-left:3px}
 
-/* Test mode toolbar */
-.test-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; padding: 10px 14px; background: rgba(26,26,46,0.05); border-radius: 8px; border: 1px solid var(--border-light); }
-.test-toolbar-label { font-size: 0.78rem; color: var(--text-light); font-weight: 600; margin-right: 4px; }
-.tbtn { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border); background: var(--card-bg); font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s; color: var(--text); }
-.tbtn:hover { border-color: var(--gold); background: rgba(201,162,39,0.08); }
-.tbtn.on { background: var(--header-bg); color: var(--gold); border-color: var(--header-bg); }
-.tbtn.reset { border-color: var(--success); color: var(--success); background: transparent; }
-.tbtn.reset:hover { background: rgba(39,174,96,0.08); }
-.tbtn-hint { font-size: 0.73rem; color: var(--text-light); }
+table.wst{width:100%;border-collapse:collapse;table-layout:fixed}
+table.wst th{background:#1a1a2e;color:#c9a227;padding:7px 2px;font-size:.68rem;text-align:center;border:1.5px solid #333;font-family:'Noto Sans KR',sans-serif;font-weight:700;line-height:1.4}
+table.wst td{border:1.5px solid #bbb;text-align:center;vertical-align:middle;padding:0}
+.wst .num-td{background:#f0ebe0;font-size:.63rem;color:#555;width:28px;font-family:'Noto Sans KR',sans-serif;font-weight:600;line-height:1.4}
+.wst .grd-td{background:#f0ebe0;font-size:.68rem;color:#333;width:30px;font-family:'Noto Sans KR',sans-serif;font-weight:600}
 
-/* Worksheet */
-.worksheet-wrap { overflow-x: auto; }
-.worksheet-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; border-bottom: 2.5px solid #1a1a2e; padding-bottom: 6px; }
-.ws-title-text { font-family: 'Noto Serif KR', serif; font-size: 1.15rem; font-weight: 700; }
-.ws-name-area { font-family: 'Noto Sans KR', sans-serif; font-size: 0.85rem; display: flex; gap: 16px; }
-.ws-name-area .blank { display: inline-block; width: 80px; border-bottom: 1.5px solid #333; margin-left: 4px; }
+/* Cell */
+.wst .hj-td{height:70px;position:relative}
+.cell-in{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:3px 2px;position:relative}
 
-table.ws-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-table.ws-table th { background: #1a1a2e; color: #c9a227; padding: 7px 2px; font-size: 0.7rem; text-align: center; border: 1.5px solid #333; font-family: 'Noto Sans KR', sans-serif; font-weight: 700; line-height: 1.4; }
-table.ws-table td { border: 1.5px solid #bbb; text-align: center; vertical-align: middle; padding: 0; }
-.ws-num-col { background: #f0ebe0; font-size: 0.66rem; color: #555; width: 28px; font-family: 'Noto Sans KR', sans-serif; font-weight: 600; line-height: 1.3; }
-.ws-grade-col { background: #f0ebe0; font-size: 0.7rem; color: #333; width: 30px; font-family: 'Noto Sans KR', sans-serif; font-weight: 600; }
+/* Hun/Eum — top clickable zone */
+.he-zone{font-family:'Noto Sans KR',sans-serif;font-size:.58rem;color:#333;line-height:1.3;cursor:pointer;padding:2px 5px;border-radius:3px;transition:background .15s;width:100%;text-align:center;min-height:18px;display:flex;align-items:center;justify-content:center;user-select:none}
+.he-zone:hover{background:rgba(201,162,39,.18)}
+.he-zone.hid{background:#d8d4cc;color:transparent;min-width:38px}
+.he-zone.hid:hover{background:rgba(201,162,39,.28)}
 
-/* Character cell */
-.ws-cell { height: 68px; }
-.cell-inner { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 3px 2px; }
+/* Hanja — bottom clickable zone */
+.hj-zone{font-family:'Noto Serif KR',serif;font-size:1.55rem;font-weight:700;line-height:1;cursor:pointer;padding:1px 3px;border-radius:4px;transition:all .15s;user-select:none}
+.hj-zone:hover{background:rgba(201,162,39,.18)}
+.hj-zone.hid{color:transparent;background:#dedad0;border-radius:4px;min-width:1.8rem;min-height:1.8rem;display:flex;align-items:center;justify-content:center}
+.hj-zone.hid:hover{background:rgba(201,162,39,.28)}
 
-/* Huneum — clickable top part */
-.cell-huneum {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 0.58rem; color: #333; line-height: 1.3;
-  cursor: pointer; padding: 2px 6px; border-radius: 3px;
-  transition: background 0.15s; width: 100%; text-align: center;
-  min-height: 18px; display: flex; align-items: center; justify-content: center;
-  user-select: none;
-}
-.cell-huneum:hover { background: rgba(201,162,39,0.18); }
-.cell-huneum.hidden { background: #d8d4cc; color: transparent; min-width: 40px; }
-.cell-huneum.hidden:hover { background: rgba(201,162,39,0.3); }
+/* Edit mode overlays */
+body.edit-mode .he-zone{cursor:text;background:rgba(41,128,185,.06)!important}
+body.edit-mode .he-zone:hover{background:rgba(41,128,185,.14)!important}
+body.edit-mode .hj-zone{cursor:text;background:rgba(41,128,185,.06)!important}
+body.edit-mode .hj-zone:hover{background:rgba(41,128,185,.14)!important}
+body.edit-mode .he-zone.hid,body.edit-mode .hj-zone.hid{background:rgba(41,128,185,.1)!important;color:inherit!important}
 
-/* Hanja — clickable bottom part */
-.cell-hanja {
-  font-family: 'Noto Serif KR', serif;
-  font-size: 1.55rem; font-weight: 700; line-height: 1;
-  cursor: pointer; padding: 1px 4px; border-radius: 4px;
-  transition: all 0.15s; user-select: none;
-}
-.cell-hanja:hover { background: rgba(201,162,39,0.18); }
-.cell-hanja.hidden { color: transparent; background: #dedad0; border-radius: 4px; min-width: 1.8rem; min-height: 1.8rem; display: flex; align-items: center; justify-content: center; }
-.cell-hanja.hidden:hover { background: rgba(201,162,39,0.3); }
+/* Inline edit popup */
+.edit-popup{position:absolute;z-index:50;background:#fff;border:2px solid #2980b9;border-radius:8px;padding:10px 12px;box-shadow:0 4px 20px rgba(0,0,0,.18);min-width:160px;display:none;flex-direction:column;gap:6px}
+.edit-popup.show{display:flex}
+.edit-popup label{font-size:.7rem;font-weight:600;color:var(--mute);display:flex;flex-direction:column;gap:2px}
+.edit-popup input{padding:4px 7px;border:1.5px solid var(--br);border-radius:5px;font-size:.9rem;font-family:'Noto Serif KR',serif;color:var(--text);width:100%;text-align:center}
+.edit-popup input:focus{outline:none;border-color:#2980b9}
+.edit-popup .hj-inp{font-size:1.5rem}
+.ep-actions{display:flex;gap:5px;margin-top:2px}
+.ep-ok{flex:1;background:#2980b9;color:#fff;border:none;border-radius:5px;padding:5px;font-size:.78rem;cursor:pointer;font-weight:600;font-family:'Noto Sans KR',sans-serif}
+.ep-ok:hover{background:#1f6391}
+.ep-del{background:var(--red);color:#fff;border:none;border-radius:5px;padding:5px 8px;font-size:.78rem;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+.ep-del:hover{background:#a93226}
+.ep-cancel{background:var(--br);color:var(--text);border:none;border-radius:5px;padding:5px 8px;font-size:.78rem;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+
+/* Add row button in worksheet */
+.ws-add-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 
 /* Empty cell */
-.ws-cell-empty { height: 68px; }
+.wst .emp-td{height:70px;background:#faf8f4}
 
-/* Legend */
-.ws-legend { display: flex; gap: 14px; margin-bottom: 8px; font-size: 0.75rem; color: var(--text-light); flex-wrap: wrap; }
-.legend-item { display: flex; align-items: center; gap: 5px; }
-.legend-box { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #bbb; }
+/* SECTIONS */
+.sec{display:none}.sec.show{display:block}
 
-/* Sections */
-.section { display: none; }
-.section.show { display: block; }
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:none;align-items:center;justify-content:center;padding:14px}
+.mo.show{display:flex}
+.mo-box{background:var(--card);border-radius:12px;padding:24px;max-width:520px;width:100%;box-shadow:0 8px 32px rgba(44,36,22,.16);max-height:90vh;overflow-y:auto}
+.mo-title{font-family:'Noto Serif KR',serif;font-size:1.05rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.mo-x{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--mute)}
+.mo-box p{font-size:.83rem;color:var(--mute);margin-bottom:9px;line-height:1.6}
+.mo-box pre{background:#1a1a2e;color:#c9a227;padding:13px;border-radius:8px;font-size:.7rem;overflow-x:auto;line-height:1.6;font-family:monospace;max-height:300px;overflow-y:auto}
 
-/* Modal */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; }
-.modal-overlay.show { display: flex; }
-.modal { background: var(--card-bg); border-radius: 12px; padding: 28px; max-width: 540px; width: 100%; box-shadow: 0 8px 32px rgba(44,36,22,0.16); max-height: 90vh; overflow-y: auto; }
-.modal-title { font-family: 'Noto Serif KR', serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
-.modal-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-light); }
-.modal p { font-size: 0.85rem; color: var(--text-light); margin-bottom: 10px; line-height: 1.6; }
-.modal pre { background: #1a1a2e; color: #c9a227; padding: 14px; border-radius: 8px; font-size: 0.72rem; overflow-x: auto; line-height: 1.6; font-family: monospace; max-height: 320px; overflow-y: auto; }
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--hd);color:#fff;padding:11px 18px;border-radius:8px;font-size:.82rem;box-shadow:0 6px 24px rgba(44,36,22,.2);z-index:999;transform:translateY(70px);opacity:0;transition:all .3s;pointer-events:none;max-width:300px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-left:4px solid var(--gold)}
+.toast.err{border-left:4px solid var(--red)}
 
-/* Toast */
-.toast { position: fixed; bottom: 24px; right: 24px; background: var(--header-bg); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 0.85rem; box-shadow: 0 8px 32px rgba(44,36,22,0.16); z-index: 999; transform: translateY(80px); opacity: 0; transition: all 0.3s; pointer-events: none; max-width: 320px; }
-.toast.show { transform: translateY(0); opacity: 1; }
-.toast.toast-ok { border-left: 4px solid var(--gold); }
-.toast.toast-err { border-left: 4px solid var(--danger); }
+/* Mobile page */
+.mob-page{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:var(--bg)}
+.mob-page.show{display:flex}
+.mob-logo{font-family:'Noto Serif KR',serif;font-size:1.5rem;color:var(--gold);margin-bottom:8px;font-weight:700}
+.mob-sub{color:var(--mute);font-size:.85rem;margin-bottom:28px}
+.mob-btns{display:flex;flex-direction:column;gap:12px;width:100%;max-width:300px}
+.mob-btn{display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:11px;background:var(--card);border:1.5px solid var(--br);cursor:pointer;font-size:.95rem;font-weight:600;font-family:'Noto Sans KR',sans-serif;color:var(--text);transition:all .2s}
+.mob-btn:hover{border-color:var(--gold)}
+.mob-icon{font-size:1.7rem}
+.mob-st{margin-top:18px;padding:11px 18px;border-radius:8px;font-size:.85rem;text-align:center;display:none}
+.mob-st.show{display:block}
+.mob-st.ok{background:#d4edda;color:#155724}
+.mob-st.err{background:#f8d7da;color:#721c24}
 
-/* Mobile upload page */
-.mobile-upload-page { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; background: var(--bg); }
-.mobile-upload-page.show { display: flex; }
-.mobile-logo { font-family: 'Noto Serif KR', serif; font-size: 1.6rem; color: var(--gold); margin-bottom: 8px; font-weight: 700; }
-.mobile-sub { color: var(--text-light); font-size: 0.88rem; margin-bottom: 32px; }
-.mobile-btns { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 320px; }
-.mobile-btn { display: flex; align-items: center; gap: 14px; padding: 18px 20px; border-radius: 12px; background: var(--card-bg); border: 1.5px solid var(--border); cursor: pointer; font-size: 1rem; font-weight: 600; font-family: 'Noto Sans KR', sans-serif; color: var(--text); transition: all 0.2s; }
-.mobile-btn:hover { border-color: var(--gold); }
-.mobile-btn-icon { font-size: 1.8rem; }
-.mobile-status { margin-top: 20px; padding: 12px 20px; border-radius: 8px; font-size: 0.88rem; text-align: center; display: none; }
-.mobile-status.show { display: block; }
-.mobile-status.ok { background: #d4edda; color: #155724; }
-.mobile-status.err { background: #f8d7da; color: #721c24; }
-
-/* Print */
-@media print {
-  header, .steps, .no-print { display: none !important; }
-  body { background: #fff; }
-  main { max-width: 100%; padding: 0; margin: 0; }
-  .section { display: block !important; }
-  .card { border: none; box-shadow: none; padding: 0; background: #fff; }
-  .worksheet-wrap { overflow: visible; }
-  table.ws-table th { background: #1a1a2e !important; color: #c9a227 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .ws-num-col, .ws-grade-col { background: #f0ebe0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .cell-huneum.hidden, .cell-hanja.hidden { background: #ccc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+/* PRINT */
+@media print{
+  header,.no-print{display:none!important}
+  body{background:#fff}
+  main{max-width:100%;padding:0;margin:0}
+  .sec{display:block!important}
+  .card{border:none;box-shadow:none;padding:0;background:#fff}
+  .ws-wrap{overflow:visible}
+  table.wst th{background:#1a1a2e!important;color:#c9a227!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .num-td,.grd-td{background:#f0ebe0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .he-zone.hid,.hj-zone.hid{background:#ccc!important;color:transparent!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .edit-popup{display:none!important}
 }
 </style>
 </head>
 <body>
 
 <!-- Mobile upload page -->
-<div class="mobile-upload-page" id="mobileUploadPage">
-  <div class="mobile-logo">漢字 학습지</div>
-  <div class="mobile-sub">사진을 찍어 학습지를 만드세요</div>
-  <input type="file" id="mobileFileInput" accept="image/*" capture="environment" style="display:none">
-  <input type="file" id="mobileGalleryInput" accept="image/*" style="display:none">
-  <div class="mobile-btns">
-    <div class="mobile-btn" onclick="document.getElementById('mobileFileInput').click()">
-      <span class="mobile-btn-icon">📷</span>
-      <div><div>카메라로 촬영</div><div style="font-size:0.75rem;color:var(--text-light);font-weight:400">지금 바로 촬영하기</div></div>
+<div class="mob-page" id="mobPage">
+  <div class="mob-logo">漢字 학습지</div>
+  <div class="mob-sub">사진을 찍어 학습지를 만드세요</div>
+  <input type="file" id="mobCam" accept="image/*" capture="environment" style="display:none">
+  <input type="file" id="mobGal" accept="image/*" style="display:none">
+  <div class="mob-btns">
+    <div class="mob-btn" onclick="document.getElementById('mobCam').click()">
+      <span class="mob-icon">📷</span>
+      <div><div>카메라로 촬영</div><div style="font-size:.72rem;color:var(--mute);font-weight:400">지금 바로 촬영하기</div></div>
     </div>
-    <div class="mobile-btn" onclick="document.getElementById('mobileGalleryInput').click()">
-      <span class="mobile-btn-icon">🖼️</span>
-      <div><div>갤러리에서 선택</div><div style="font-size:0.75rem;color:var(--text-light);font-weight:400">저장된 사진 불러오기</div></div>
+    <div class="mob-btn" onclick="document.getElementById('mobGal').click()">
+      <span class="mob-icon">🖼️</span>
+      <div><div>갤러리에서 선택</div><div style="font-size:.72rem;color:var(--mute);font-weight:400">저장된 사진 불러오기</div></div>
     </div>
   </div>
-  <div class="mobile-status" id="mobileStatus"></div>
+  <div class="mob-st" id="mobSt"></div>
 </div>
 
 <!-- Main App -->
-<div id="mainApp">
+<div id="app">
 <header>
-  <div class="logo">
-    <div class="logo-icon">漢</div>
-    한자 학습지 생성기
-  </div>
-  <div class="header-actions">
-    <button class="btn-icon" onclick="openModal('workerModal')">⚙️ Worker</button>
-    <button class="btn-icon" onclick="openApiModal()">🔑 API 키</button>
+  <div class="logo"><div class="logo-icon">漢</div>한자 학습지 생성기</div>
+  <div class="hdr-btns">
+    <button class="hbtn" onclick="openMo('moWorker')">⚙️ Worker</button>
+    <button class="hbtn" onclick="openApiMo()">🔑 API 키</button>
   </div>
 </header>
 
 <main>
-  <div class="steps">
-    <div class="step active" id="step1-ind" onclick="goToStep(1)">
-      <div class="step-num">1</div><div class="step-label">업로드 & 추출</div>
-    </div>
-    <div class="step-sep"></div>
-    <div class="step" id="step2-ind" onclick="goToStep(2)">
-      <div class="step-num">2</div><div class="step-label">데이터 편집</div>
-    </div>
-    <div class="step-sep"></div>
-    <div class="step" id="step3-ind" onclick="goToStep(3)">
-      <div class="step-num">3</div><div class="step-label">학습 & 인쇄</div>
-    </div>
-  </div>
 
-  <!-- STEP 1 -->
-  <div class="section show" id="sec1">
+  <!-- UPLOAD SECTION -->
+  <div class="sec show" id="secUp">
     <div class="card">
       <div class="card-title">파일 업로드</div>
-      <div class="upload-area" id="uploadArea">
-        <div class="upload-icon">📄</div>
-        <div class="upload-title">PDF 또는 이미지를 드래그하거나 클릭하세요</div>
-        <div class="upload-hint">JPG · PNG · PDF 지원 · Ctrl+V 붙여넣기 가능</div>
+      <div class="upload-area" id="upArea">
+        <div class="up-icon">📄</div>
+        <div class="up-title">PDF 또는 이미지를 드래그하거나 클릭하세요</div>
+        <div class="up-hint">JPG · PNG · PDF · Ctrl+V 붙여넣기</div>
       </div>
-      <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,image/*" style="display:none">
-      <div class="upload-methods">
-        <div class="method-btn" onclick="document.getElementById('fileInput').click()">
-          <span class="method-icon">💻</span>
-          <div class="method-label">PC 파일 선택</div>
-          <div class="method-sub">클릭하여 파일 탐색기 열기</div>
+      <input type="file" id="fileIn" accept=".pdf,.jpg,.jpeg,.png,image/*" style="display:none">
+      <div class="up-methods">
+        <div class="mth" onclick="document.getElementById('fileIn').click()">
+          <span class="mth-icon">💻</span>
+          <div class="mth-label">PC 파일 선택</div>
+          <div class="mth-sub">파일 탐색기 열기</div>
         </div>
-        <div class="method-btn" onclick="showQR()">
-          <span class="method-icon">📱</span>
-          <div class="method-label">핸드폰으로 촬영</div>
-          <div class="method-sub">QR 코드로 모바일 연결</div>
+        <div class="mth" onclick="showQR()">
+          <span class="mth-icon">📱</span>
+          <div class="mth-label">핸드폰으로 촬영</div>
+          <div class="mth-sub">QR 코드로 모바일 연결</div>
         </div>
       </div>
       <div class="qr-area" id="qrArea">
-        <div style="font-size:0.88rem;font-weight:600;">핸드폰으로 QR 코드를 스캔하세요</div>
+        <div style="font-size:.85rem;font-weight:600">핸드폰으로 QR 코드를 스캔하세요</div>
         <div id="qrcode"></div>
-        <div style="font-size:0.82rem;color:var(--text-light)">카메라 앱으로 QR을 스캔하면 촬영 화면이 열립니다</div>
-        <div class="poll-status waiting" id="pollStatus">📡 연결 대기 중...</div>
-        <button class="btn btn-secondary btn-sm" onclick="hideQR()">취소</button>
+        <div style="font-size:.78rem;color:var(--mute)">스캔하면 촬영 화면이 열립니다</div>
+        <div class="poll-st w" id="pollSt">📡 연결 대기 중...</div>
+        <button class="btn btn-o btn-sm" onclick="hideQR()">취소</button>
       </div>
-      <div class="file-preview" id="filePreview">
-        <div id="fileThumbWrap"></div>
-        <div class="file-info">
-          <div class="file-name" id="fileName">-</div>
-          <div class="file-size" id="fileSize">-</div>
-        </div>
-        <button class="btn btn-danger btn-sm" onclick="clearFile()">✕ 제거</button>
+      <div class="fp" id="fp">
+        <div id="fthumb"></div>
+        <div class="finfo"><div class="fname" id="fname">-</div><div class="fsize" id="fsize">-</div></div>
+        <button class="btn btn-r btn-sm" onclick="clearFile()">✕</button>
       </div>
     </div>
 
     <div class="card">
       <div class="card-title">API 키</div>
       <div class="api-row">
-        <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off">
-        <button class="btn btn-secondary btn-sm" onclick="toggleApiVis()">보기</button>
-        <button class="btn btn-secondary btn-sm" onclick="saveApiKey()">저장</button>
+        <input type="password" id="apiIn" placeholder="sk-ant-api03-..." autocomplete="off">
+        <button class="btn btn-o btn-sm" onclick="togApiVis()">보기</button>
+        <button class="btn btn-o btn-sm" onclick="saveKey()">저장</button>
       </div>
-      <div class="api-status" id="apiStatus"></div>
+      <div class="api-st" id="apiSt"></div>
     </div>
 
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn btn-primary" id="extractBtn" onclick="extractData()">✨ 한자 데이터 추출</button>
-      <button class="btn btn-secondary" onclick="loadDemo()">📚 데모 데이터</button>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn btn-g" id="extBtn" onclick="extract()">✨ 한자 추출</button>
+      <button class="btn btn-o" onclick="loadDemo()">📚 데모 데이터</button>
     </div>
-    <div id="progressWrap" style="margin-top:16px;display:none;">
-      <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
-      <div class="progress-text" id="progressText"></div>
+    <div id="progWrap" style="display:none;margin-top:14px">
+      <div class="prog-wrap"><div class="prog-bar" id="progBar"></div></div>
+      <div class="prog-txt" id="progTxt"></div>
     </div>
   </div>
 
-  <!-- STEP 2 -->
-  <div class="section" id="sec2">
+  <!-- WORKSHEET SECTION -->
+  <div class="sec" id="secWs">
     <div class="card">
-      <div class="card-title">
-        한자 데이터 편집
-        <span style="font-size:0.8rem;font-weight:400;color:var(--text-light);margin-left:auto" id="hanjaCount"></span>
+      <!-- Top controls -->
+      <div class="ws-controls no-print">
+        <input class="ws-title-inp" id="wsTitle" value="한자 학습지" placeholder="제목...">
+        <input class="ws-name-inp" id="wsName" placeholder="이름:">
+        <button class="btn btn-g btn-sm" onclick="window.print()">🖨️ 인쇄</button>
+        <button class="btn btn-o btn-sm" onclick="showSec('secUp')">← 업로드</button>
       </div>
-      <div class="table-wrap">
-        <table class="edit-table">
-          <thead>
-            <tr>
-              <th style="width:36px">#</th>
-              <th>한자</th><th>훈(뜻)</th><th>음(읽기)</th>
-              <th>부수</th><th>획수</th><th>급수</th>
-              <th style="width:56px">삭제</th>
-            </tr>
-          </thead>
-          <tbody id="editBody"></tbody>
+
+      <!-- Toolbar -->
+      <div class="toolbar no-print">
+        <span class="toolbar-label">시험 모드:</span>
+        <button class="tbtn" id="btnHj" onclick="togAllHj()">한자 전체 가리기</button>
+        <button class="tbtn" id="btnHe" onclick="togAllHe()">훈/음 전체 가리기</button>
+        <button class="tbtn rst" onclick="resetAll()">↺ 모두 보이기</button>
+        <div class="tbtn-sep"></div>
+        <button class="tbtn" id="btnEdit" onclick="togEditMode()">✏️ 편집 모드</button>
+        <span class="tbtn-hint" id="modeHint">· 한자/훈음 클릭으로 개별 가리기</span>
+      </div>
+
+      <!-- Worksheet -->
+      <div class="ws-wrap">
+        <div class="ws-header">
+          <div class="ws-h-title" id="wsTitleDisp">한자 학습지</div>
+          <div class="ws-h-right">이름:<span class="und" id="wsNameDisp"></span>&nbsp;날짜:<span class="und"></span></div>
+        </div>
+        <table class="wst" id="wst">
+          <colgroup><col style="width:28px"><col><col><col><col><col><col><col style="width:30px"></colgroup>
+          <thead><tr>
+            <th class="num-td">번호</th>
+            <th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th>
+            <th class="grd-td">급</th>
+          </tr></thead>
+          <tbody id="wstBody"></tbody>
         </table>
       </div>
-      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-secondary btn-sm" onclick="addRow()">+ 행 추가</button>
-        <button class="btn btn-primary btn-sm" onclick="goToStep(3)">→ 학습 & 인쇄</button>
+
+      <!-- Add row button -->
+      <div class="ws-add-row no-print">
+        <button class="btn btn-o btn-sm" onclick="addRow()">+ 한자 추가</button>
+        <span style="font-size:.73rem;color:var(--mute);align-self:center">편집 모드에서 셀 클릭 시 내용 수정 가능</span>
       </div>
     </div>
   </div>
 
-  <!-- STEP 3 -->
-  <div class="section" id="sec3">
-    <div class="card">
-      <div class="preview-controls no-print">
-        <input class="preview-title-input" id="wsTitle" placeholder="학습지 제목..." value="한자 학습지">
-        <input class="name-input" id="wsName" placeholder="이름:">
-        <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ 인쇄</button>
-        <button class="btn btn-secondary btn-sm" onclick="goToStep(2)">← 수정</button>
-      </div>
-
-      <!-- Test mode toolbar -->
-      <div class="test-toolbar no-print">
-        <span class="test-toolbar-label">시험 모드:</span>
-        <button class="tbtn" id="btnHideHanja" onclick="toggleAllHanja()">한자 전체 가리기</button>
-        <button class="tbtn" id="btnHideHun" onclick="toggleAllHun()">훈/음 전체 가리기</button>
-        <button class="tbtn reset" onclick="resetAll()">↺ 모두 보이기</button>
-        <span class="tbtn-hint">· 셀 직접 클릭으로 개별 가리기/보이기</span>
-      </div>
-
-      <div class="ws-legend no-print">
-        <div class="legend-item"><div class="legend-box" style="background:#dedad0"></div><span>한자 숨김</span></div>
-        <div class="legend-item"><div class="legend-box" style="background:#d8d4cc"></div><span>훈/음 숨김</span></div>
-        <span style="color:var(--text-light);font-size:0.73rem">· 위쪽(훈/음) 또는 아래쪽(한자) 클릭으로 개별 가리기</span>
-      </div>
-
-      <div class="worksheet-wrap">
-        <div id="worksheet"></div>
-      </div>
-    </div>
-  </div>
 </main>
-</div><!-- mainApp -->
+</div><!-- #app -->
+
+<!-- Edit popup (shared, moved around) -->
+<div class="edit-popup" id="editPopup">
+  <label>한자<input class="hj-inp" id="epHj" type="text" maxlength="4"></label>
+  <label>훈 (뜻)<input id="epHun" type="text"></label>
+  <label>음 (읽기)<input id="epEum" type="text"></label>
+  <label>급수<input id="epLv" type="text" maxlength="4" style="width:60px"></label>
+  <div class="ep-actions">
+    <button class="ep-ok" onclick="applyEdit()">✓ 적용</button>
+    <button class="ep-del" onclick="deleteCell()">삭제</button>
+    <button class="ep-cancel" onclick="closePopup()">취소</button>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
 <!-- API Modal -->
-<div class="modal-overlay" id="apiModal">
-  <div class="modal">
-    <div class="modal-title">🔑 API 키 설정 <button class="modal-close" onclick="closeModal('apiModal')">✕</button></div>
-    <p>Anthropic API 키를 입력하세요. localStorage에 저장됩니다 (영어 앱과 공유: <code>vocabApiKey</code>).</p>
+<div class="mo" id="moApi">
+  <div class="mo-box">
+    <div class="mo-title">🔑 API 키 설정 <button class="mo-x" onclick="closeMo('moApi')">✕</button></div>
+    <p>Anthropic API 키를 입력하세요. localStorage에 저장됩니다 (<code>vocabApiKey</code>).</p>
     <div class="api-row">
-      <input type="password" id="apiKeyModal" placeholder="sk-ant-api03-...">
-      <button class="btn btn-secondary btn-sm" onclick="toggleApiVisModal()">보기</button>
+      <input type="password" id="apiInMo" placeholder="sk-ant-api03-...">
+      <button class="btn btn-o btn-sm" onclick="togApiVisMo()">보기</button>
     </div>
-    <div style="margin-top:12px;display:flex;gap:8px;">
-      <button class="btn btn-primary btn-sm" onclick="saveApiKeyModal()">저장</button>
-      <button class="btn btn-secondary btn-sm" onclick="closeModal('apiModal')">취소</button>
+    <div style="margin-top:10px;display:flex;gap:7px">
+      <button class="btn btn-g btn-sm" onclick="saveKeyMo()">저장</button>
+      <button class="btn btn-o btn-sm" onclick="closeMo('moApi')">취소</button>
     </div>
   </div>
 </div>
 
 <!-- Worker Modal -->
-<div class="modal-overlay" id="workerModal">
-  <div class="modal">
-    <div class="modal-title">⚙️ vocab-proxy Worker 코드 <button class="modal-close" onclick="closeModal('workerModal')">✕</button></div>
-    <p>아래 코드를 vocab-proxy Worker에 붙여넣고 <b>Save and Deploy</b> 하세요.</p>
+<div class="mo" id="moWorker">
+  <div class="mo-box">
+    <div class="mo-title">⚙️ vocab-proxy Worker 코드 <button class="mo-x" onclick="closeMo('moWorker')">✕</button></div>
+    <p>아래 전체 코드를 vocab-proxy Worker에 붙여넣고 <b>Save and Deploy</b> 하세요.</p>
     <pre id="workerCode"></pre>
-    <div style="margin-top:12px;">
-      <button class="btn btn-primary btn-sm" onclick="copyWorkerCode()">📋 코드 복사</button>
+    <div style="margin-top:10px">
+      <button class="btn btn-g btn-sm" onclick="copyWorker()">📋 코드 복사</button>
     </div>
   </div>
 </div>
 
 <script>
-const PROXY_BASE = 'https://vocab-proxy.police6980.workers.dev';
-const API_KEY_LS = 'vocabApiKey';
-const MODEL = 'claude-haiku-4-5-20251001';
-const COLS = 6;
+const PROXY = 'https://vocab-proxy.police6980.workers.dev';
+const LS_KEY = 'vocabApiKey';
+const MODEL  = 'claude-haiku-4-5-20251001';
+const COLS   = 6;
 
-let hanjaData = [];
+let data = [];          // [{hanja,hun,eum,level}, ...]
 let uploadedFile = null;
-let currentStep = 1;
-let pollInterval = null, pollSid = null;
-let hideHanja = {}, hideHun = {};
-let allHanjaHidden = false, allHunHidden = false;
+let pollIv = null, pollSid = null;
+let hidHj = {}, hidHe = {};
+let allHj = false, allHe = false;
+let editMode = false;
+let editIdx = -1;       // currently editing cell index
 
-const DEMO = [
-  {hanja:'目',hun:'눈',eum:'목',busu:'目',hoeksu:'5',level:'7'},
-  {hanja:'己',hun:'몸',eem:'기',eum:'기',busu:'己',hoeksu:'3',level:'6'},
-  {hanja:'開',hun:'열',eum:'개',busu:'門',hoeksu:'12',level:'6'},
-  {hanja:'彩',hun:'채색',eum:'채',busu:'彡',hoeksu:'11',level:'4'},
-  {hanja:'山',hun:'뫼',eum:'산',busu:'山',hoeksu:'3',level:'8'},
-  {hanja:'水',hun:'물',eum:'수',busu:'水',hoeksu:'4',level:'8'},
-  {hanja:'火',hun:'불',eum:'화',busu:'火',hoeksu:'4',level:'8'},
-  {hanja:'木',hun:'나무',eum:'목',busu:'木',hoeksu:'4',level:'8'},
-  {hanja:'金',hun:'쇠',eum:'금',busu:'金',hoeksu:'8',level:'7'},
-  {hanja:'土',hun:'흙',eum:'토',busu:'土',hoeksu:'3',level:'8'},
-  {hanja:'日',hun:'날',eum:'일',busu:'日',hoeksu:'4',level:'8'},
-  {hanja:'月',hun:'달',eum:'월',busu:'月',hoeksu:'4',level:'8'},
-  {hanja:'人',hun:'사람',eum:'인',busu:'人',hoeksu:'2',level:'8'},
-  {hanja:'大',hun:'큰',eum:'대',busu:'大',hoeksu:'3',level:'8'},
-  {hanja:'小',hun:'작을',eum:'소',busu:'小',hoeksu:'3',level:'8'},
-  {hanja:'中',hun:'가운데',eum:'중',busu:'丨',hoeksu:'4',level:'8'},
-  {hanja:'心',hun:'마음',eum:'심',busu:'心',hoeksu:'4',level:'7'},
-  {hanja:'手',hun:'손',eum:'수',busu:'手',hoeksu:'4',level:'7'},
-  {hanja:'學',hun:'배울',eum:'학',busu:'子',hoeksu:'16',level:'6'},
-  {hanja:'校',hun:'학교',eum:'교',busu:'木',hoeksu:'10',level:'7'},
+// ── DEMO ──
+const DEMO=[
+  {hanja:'山',hun:'뫼',eum:'산',level:'8'},{hanja:'水',hun:'물',eum:'수',level:'8'},
+  {hanja:'火',hun:'불',eum:'화',level:'8'},{hanja:'木',hun:'나무',eum:'목',level:'8'},
+  {hanja:'金',hun:'쇠',eum:'금',level:'8'},{hanja:'土',hun:'흙',eum:'토',level:'8'},
+  {hanja:'日',hun:'날',eum:'일',level:'8'},{hanja:'月',hun:'달',eum:'월',level:'8'},
+  {hanja:'人',hun:'사람',eum:'인',level:'8'},{hanja:'大',hun:'큰',eum:'대',level:'8'},
+  {hanja:'小',hun:'작을',eum:'소',level:'8'},{hanja:'中',hun:'가운데',eum:'중',level:'8'},
+  {hanja:'心',hun:'마음',eum:'심',level:'7'},{hanja:'手',hun:'손',eum:'수',level:'7'},
+  {hanja:'足',hun:'발',eum:'족',level:'7'},{hanja:'口',hun:'입',eum:'구',level:'8'},
+  {hanja:'耳',hun:'귀',eum:'이',level:'7'},{hanja:'目',hun:'눈',eum:'목',level:'7'},
+  {hanja:'學',hun:'배울',eum:'학',level:'6'},{hanja:'校',hun:'학교',eum:'교',level:'7'},
+  {hanja:'先',hun:'먼저',eum:'선',level:'7'},{hanja:'生',hun:'날',eum:'생',level:'8'},
+  {hanja:'父',hun:'아버지',eum:'부',level:'8'},{hanja:'母',hun:'어머니',eum:'모',level:'8'},
 ];
 
 // ── INIT ──
 (function(){
-  const params = new URLSearchParams(location.search);
-  const sid = params.get('upload');
-  if(sid){ showMobilePage(sid); return; }
-
-  const k = localStorage.getItem(API_KEY_LS)||'';
-  document.getElementById('apiKeyInput').value = k;
-  document.getElementById('apiKeyModal').value = k;
-  updateApiStatus();
-  setupDragDrop();
-  document.addEventListener('paste', handlePaste);
-  document.getElementById('fileInput').addEventListener('change', e=>{ if(e.target.files[0]) handleFile(e.target.files[0]); });
-  document.getElementById('mobileFileInput').addEventListener('change', e=>{ if(e.target.files[0]) sendMobile(e.target.files[0]); });
-  document.getElementById('mobileGalleryInput').addEventListener('change', e=>{ if(e.target.files[0]) sendMobile(e.target.files[0]); });
-  document.addEventListener('keydown', e=>{ if(e.ctrlKey&&e.key==='p'){ e.preventDefault(); if(currentStep===3) window.print(); } });
-  document.getElementById('wsTitle').addEventListener('input', renderPreview);
-  document.getElementById('wsName').addEventListener('input', renderPreview);
+  const p=new URLSearchParams(location.search);
+  const sid=p.get('upload');
+  if(sid){showMobPage(sid);return;}
+  const k=localStorage.getItem(LS_KEY)||'';
+  document.getElementById('apiIn').value=k;
+  document.getElementById('apiInMo').value=k;
+  updateApiSt();
+  setupDrop();
+  document.addEventListener('paste',onPaste);
+  document.getElementById('fileIn').addEventListener('change',e=>{if(e.target.files[0])handleFile(e.target.files[0]);});
+  document.getElementById('mobCam').addEventListener('change',e=>{if(e.target.files[0])sendMob(e.target.files[0]);});
+  document.getElementById('mobGal').addEventListener('change',e=>{if(e.target.files[0])sendMob(e.target.files[0]);});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closePopup();if(e.ctrlKey&&e.key==='p'){e.preventDefault();if(!document.getElementById('secUp').classList.contains('show'))window.print();}});
+  document.addEventListener('click',e=>{
+    const pop=document.getElementById('editPopup');
+    if(!pop.contains(e.target)&&!e.target.closest('.hj-zone')&&!e.target.closest('.he-zone'))closePopup();
+  });
+  document.getElementById('wsTitle').addEventListener('input',updateHeader);
+  document.getElementById('wsName').addEventListener('input',updateHeader);
   setWorkerCode();
 })();
 
-// ── MOBILE ──
-function showMobilePage(sid){
-  document.getElementById('mainApp').style.display='none';
-  const p=document.getElementById('mobileUploadPage'); p.classList.add('show'); p.dataset.sid=sid;
+function updateHeader(){
+  document.getElementById('wsTitleDisp').textContent=document.getElementById('wsTitle').value||'한자 학습지';
+  document.getElementById('wsNameDisp').textContent=document.getElementById('wsName').value||'';
 }
-async function sendMobile(file){
-  const sid=document.getElementById('mobileUploadPage').dataset.sid;
-  const s=document.getElementById('mobileStatus');
-  s.textContent='📤 전송 중...'; s.className='mobile-status show';
+
+// ── SECTIONS ──
+function showSec(id){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('show'));
+  document.getElementById(id).classList.add('show');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── MOBILE ──
+function showMobPage(sid){
+  document.getElementById('app').style.display='none';
+  const p=document.getElementById('mobPage');p.classList.add('show');p.dataset.sid=sid;
+}
+async function sendMob(file){
+  const sid=document.getElementById('mobPage').dataset.sid;
+  const s=document.getElementById('mobSt');
+  s.textContent='📤 전송 중...';s.className='mob-st show';
   try{
     const b64=await toB64(file);
     const mt=file.type||'image/jpeg';
-    const r=await fetch(`${PROXY_BASE}/upload/${sid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({base64:b64,mediaType:mt})});
-    if(r.ok){s.textContent='✅ 전송 완료! PC 화면을 확인하세요.';s.className='mobile-status show ok';}
+    const r=await fetch(`${PROXY}/upload/${sid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({base64:b64,mediaType:mt})});
+    if(r.ok){s.textContent='✅ 전송 완료! PC 화면을 확인하세요.';s.className='mob-st show ok';}
     else throw new Error('서버 오류');
-  }catch(e){s.textContent='❌ '+e.message;s.className='mobile-status show err';}
+  }catch(e){s.textContent='❌ '+e.message;s.className='mob-st show err';}
 }
 
 // ── FILE ──
-function setupDragDrop(){
-  const a=document.getElementById('uploadArea');
-  a.addEventListener('dragover',e=>{e.preventDefault();a.classList.add('drag-over');});
-  a.addEventListener('dragleave',()=>a.classList.remove('drag-over'));
-  a.addEventListener('drop',e=>{e.preventDefault();a.classList.remove('drag-over');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
-  a.addEventListener('click',()=>document.getElementById('fileInput').click());
+function setupDrop(){
+  const a=document.getElementById('upArea');
+  a.addEventListener('dragover',e=>{e.preventDefault();a.classList.add('over');});
+  a.addEventListener('dragleave',()=>a.classList.remove('over'));
+  a.addEventListener('drop',e=>{e.preventDefault();a.classList.remove('over');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+  a.addEventListener('click',()=>document.getElementById('fileIn').click());
 }
-function handlePaste(e){ for(const i of e.clipboardData?.items||[]){ if(i.type.startsWith('image/')){handleFile(i.getAsFile());break;} } }
+function onPaste(e){for(const i of e.clipboardData?.items||[]){if(i.type.startsWith('image/')){handleFile(i.getAsFile());break;}}}
 async function handleFile(f){
   const ext=f.name.split('.').pop().toLowerCase();
   const b64=await toB64(f);
   const mt=(f.type==='application/pdf'||ext==='pdf')?'application/pdf':(f.type||'image/jpeg');
   uploadedFile={base64:b64,mediaType:mt,name:f.name};
-  document.getElementById('fileName').textContent=f.name;
-  document.getElementById('fileSize').textContent=fmtSize(f.size);
-  document.getElementById('fileThumbWrap').innerHTML=mt==='application/pdf'?'<div class="file-thumb-pdf">PDF</div>':`<img class="file-thumb" src="data:${mt};base64,${b64}">`;
-  document.getElementById('filePreview').classList.add('show');
+  document.getElementById('fname').textContent=f.name;
+  document.getElementById('fsize').textContent=fmtSz(f.size);
+  document.getElementById('fthumb').innerHTML=mt==='application/pdf'?'<div class="fthumb-pdf">PDF</div>':`<img class="fthumb" src="data:${mt};base64,${b64}">`;
+  document.getElementById('fp').classList.add('show');
   showToast('파일 로드 완료. 추출 버튼을 클릭하세요.','ok');
 }
-function clearFile(){ uploadedFile=null; document.getElementById('filePreview').classList.remove('show'); document.getElementById('fileInput').value=''; }
-function toB64(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(f); }); }
-function fmtSize(b){ return b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB'; }
+function clearFile(){uploadedFile=null;document.getElementById('fp').classList.remove('show');document.getElementById('fileIn').value='';}
+function toB64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});}
+function fmtSz(b){return b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB';}
 
 // ── QR ──
-const QR_URLS=['https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js','https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js','https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js'];
-async function loadQR(){ if(window.QRCode)return true; for(const u of QR_URLS){try{await new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=rej;document.head.appendChild(s);});if(window.QRCode)return true;}catch{}} return false; }
+const QR_URL=['https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js','https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js','https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js'];
+async function loadQR(){if(window.QRCode)return true;for(const u of QR_URL){try{await new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=rej;document.head.appendChild(s);});if(window.QRCode)return true;}catch{}}return false;}
 async function showQR(){
-  if(!await loadQR()){showToast('QR 라이브러리 로드 실패','err');return;}
+  if(!await loadQR()){showToast('QR 로드 실패','err');return;}
   pollSid='h'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   const url=`${location.origin}${location.pathname}?upload=${pollSid}`;
   document.getElementById('qrcode').innerHTML='';
-  new QRCode(document.getElementById('qrcode'),{text:url,width:180,height:180,colorDark:'#1a1a2e',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+  new QRCode(document.getElementById('qrcode'),{text:url,width:176,height:176,colorDark:'#1a1a2e',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
   document.getElementById('qrArea').classList.add('show');
-  document.getElementById('pollStatus').textContent='📡 연결 대기 중...';
-  document.getElementById('pollStatus').className='poll-status waiting';
+  document.getElementById('pollSt').textContent='📡 연결 대기 중...';
+  document.getElementById('pollSt').className='poll-st w';
   startPoll();
 }
-function hideQR(){ stopPoll(); document.getElementById('qrArea').classList.remove('show'); }
+function hideQR(){stopPoll();document.getElementById('qrArea').classList.remove('show');}
 function startPoll(){
   stopPoll();
-  pollInterval=setInterval(async()=>{
+  pollIv=setInterval(async()=>{
     try{
-      const r=await fetch(`${PROXY_BASE}/poll/${pollSid}`);
+      const r=await fetch(`${PROXY}/poll/${pollSid}`);
       if(r.ok){const d=await r.json();if(d&&d.base64){
         stopPoll();
         uploadedFile={base64:d.base64,mediaType:d.mediaType||'image/jpeg',name:'모바일_촬영.jpg'};
-        document.getElementById('pollStatus').textContent='✅ 사진 수신 완료!';
-        document.getElementById('pollStatus').className='poll-status received';
-        document.getElementById('fileName').textContent='모바일 촬영 이미지';
-        document.getElementById('fileSize').textContent='';
-        document.getElementById('fileThumbWrap').innerHTML=`<img class="file-thumb" src="data:${d.mediaType};base64,${d.base64}">`;
-        document.getElementById('filePreview').classList.add('show');
+        document.getElementById('pollSt').textContent='✅ 수신 완료!';
+        document.getElementById('pollSt').className='poll-st ok';
+        document.getElementById('fname').textContent='모바일 촬영 이미지';
+        document.getElementById('fsize').textContent='';
+        document.getElementById('fthumb').innerHTML=`<img class="fthumb" src="data:${d.mediaType};base64,${d.base64}">`;
+        document.getElementById('fp').classList.add('show');
         showToast('사진 수신! 추출 버튼을 클릭하세요.','ok');
       }}
     }catch{}
   },2500);
 }
-function stopPoll(){ if(pollInterval){clearInterval(pollInterval);pollInterval=null;} }
+function stopPoll(){if(pollIv){clearInterval(pollIv);pollIv=null;}}
 
 // ── API KEY ──
-function updateApiStatus(){ const k=localStorage.getItem(API_KEY_LS)||''; const el=document.getElementById('apiStatus'); if(k.startsWith('sk-ant-')){el.textContent='✓ API 키 저장됨';el.className='api-status ok';}else if(k){el.textContent='⚠ 형식 오류';el.className='api-status err';}else{el.textContent='⚠ API 키 없음';el.className='api-status err';} }
-function saveApiKey(){ localStorage.setItem(API_KEY_LS,document.getElementById('apiKeyInput').value.trim()); updateApiStatus(); showToast('저장됨','ok'); }
-function toggleApiVis(){ const i=document.getElementById('apiKeyInput'); i.type=i.type==='password'?'text':'password'; }
-function saveApiKeyModal(){ const v=document.getElementById('apiKeyModal').value.trim(); localStorage.setItem(API_KEY_LS,v); document.getElementById('apiKeyInput').value=v; updateApiStatus(); closeModal('apiModal'); showToast('저장됨','ok'); }
-function toggleApiVisModal(){ const i=document.getElementById('apiKeyModal'); i.type=i.type==='password'?'text':'password'; }
-function openApiModal(){ document.getElementById('apiKeyModal').value=localStorage.getItem(API_KEY_LS)||''; openModal('apiModal'); }
+function updateApiSt(){const k=localStorage.getItem(LS_KEY)||'';const el=document.getElementById('apiSt');if(k.startsWith('sk-ant-')){el.textContent='✓ API 키 저장됨';el.className='api-st ok';}else if(k){el.textContent='⚠ 형식 오류';el.className='api-st err';}else{el.textContent='⚠ API 키 없음';el.className='api-st err';}}
+function saveKey(){localStorage.setItem(LS_KEY,document.getElementById('apiIn').value.trim());updateApiSt();showToast('저장됨','ok');}
+function togApiVis(){const i=document.getElementById('apiIn');i.type=i.type==='password'?'text':'password';}
+function saveKeyMo(){const v=document.getElementById('apiInMo').value.trim();localStorage.setItem(LS_KEY,v);document.getElementById('apiIn').value=v;updateApiSt();closeMo('moApi');showToast('저장됨','ok');}
+function togApiVisMo(){const i=document.getElementById('apiInMo');i.type=i.type==='password'?'text':'password';}
+function openApiMo(){document.getElementById('apiInMo').value=localStorage.getItem(LS_KEY)||'';openMo('moApi');}
 
 // ── EXTRACT ──
-async function extractData(){
-  const ak=localStorage.getItem(API_KEY_LS)||'';
-  if(!ak){showToast('API 키를 먼저 입력해 주세요.','err');return;}
-  if(!uploadedFile){showToast('파일을 먼저 업로드해 주세요.','err');return;}
+async function extract(){
+  const ak=localStorage.getItem(LS_KEY)||'';
+  if(!ak){showToast('API 키를 입력해 주세요.','err');return;}
+  if(!uploadedFile){showToast('파일을 업로드해 주세요.','err');return;}
   setProg(true,5,'Claude API 연결 중...');
   try{
-    const prompt=`이 이미지/PDF에서 한자 학습 데이터를 모두 추출하세요.
-JSON 배열로만 반환 (다른 텍스트 없이):
-[{"hanja":"山","hun":"뫼","eum":"산","busu":"山","hoeksu":"3","level":"8"},...]
+    // Better prompt - ask for ALL characters and use streaming-friendly format
+    const prompt=`이 이미지/PDF에는 한자 학습 자료가 있습니다.
+표 안에 있는 모든 한자를 빠짐없이 전부 추출해주세요.
 
-각 항목: hanja(한자), hun(훈/뜻), eum(음/읽기), busu(부수), hoeksu(획수), level(급수)
-빈 정보는 "" 처리`;
-    setProg(true,50,'한자 추출 중...');
+반드시 아래 형식의 JSON 배열만 반환하세요 (다른 텍스트 없이):
+[{"hanja":"山","hun":"뫼","eum":"산","level":"8"},{"hanja":"水","hun":"물","eum":"수","level":"8"},...]
+
+규칙:
+- 이미지에 보이는 모든 한자를 빠짐없이 추출
+- hun: 한글 뜻(훈), eum: 한글 읽기(음)
+- level: 급수(숫자만, 모르면 "")
+- 반드시 JSON 배열로만 응답`;
+
+    setProg(true,40,'이미지 분석 중...');
     const isImg=uploadedFile.mediaType.startsWith('image/');
-    const cb=isImg?{type:'image',source:{type:'base64',media_type:uploadedFile.mediaType,data:uploadedFile.base64}}:{type:'document',source:{type:'base64',media_type:'application/pdf',data:uploadedFile.base64}};
-    const resp=await fetch(`${PROXY_BASE}/v1/messages`,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ak},body:JSON.stringify({model:MODEL,max_tokens:4096,messages:[{role:'user',content:[cb,{type:'text',text:prompt}]}]})});
+    const cb=isImg
+      ?{type:'image',source:{type:'base64',media_type:uploadedFile.mediaType,data:uploadedFile.base64}}
+      :{type:'document',source:{type:'base64',media_type:'application/pdf',data:uploadedFile.base64}};
+    setProg(true,60,'한자 추출 중...');
+    const resp=await fetch(`${PROXY}/v1/messages`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':ak},
+      body:JSON.stringify({model:MODEL,max_tokens:8192,messages:[{role:'user',content:[cb,{type:'text',text:prompt}]}]})
+    });
     setProg(true,85,'응답 처리 중...');
     if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${resp.status}`);}
-    const data=await resp.json();
-    const text=data.content?.map(b=>b.text||'').join('')||'';
+    const d=await resp.json();
+    const txt=d.content?.map(b=>b.text||'').join('')||'';
     let parsed=[];
-    const m=text.match(/\[[\s\S]*\]/);
-    if(m){try{parsed=JSON.parse(m[0]);}catch{}}
-    if(!Array.isArray(parsed)||!parsed.length) throw new Error('데이터 추출 실패. 이미지를 확인하세요.');
-    setProg(true,100,`${parsed.length}개 추출 완료!`);
-    hanjaData=parsed.map(h=>({hanja:h.hanja||'',hun:h.hun||'',eum:h.eum||'',busu:h.busu||'',hoeksu:String(h.hoeksu||''),level:String(h.level||'')}));
-    setTimeout(()=>{setProg(false);goToStep(2);showToast(`${hanjaData.length}개 추출됨`,'ok');},700);
+    // Try to extract JSON array
+    const m=txt.match(/\[[\s\S]*\]/);
+    if(m){try{parsed=JSON.parse(m[0]);}catch{
+      // Try to fix truncated JSON
+      const partial=m[0].replace(/,\s*\{[^}]*$/, ']');
+      try{parsed=JSON.parse(partial);}catch{}
+    }}
+    if(!Array.isArray(parsed)||!parsed.length)throw new Error('추출 실패. 이미지를 확인하세요.');
+    setProg(true,100,`${parsed.length}개 추출!`);
+    data=parsed.map(h=>({hanja:h.hanja||'',hun:h.hun||'',eum:h.eum||'',level:String(h.level||'')}));
+    setTimeout(()=>{setProg(false);renderWS();showSec('secWs');showToast(`${data.length}개 한자를 추출했습니다.`,'ok');},600);
   }catch(e){setProg(false);showToast('추출 실패: '+e.message,'err');}
 }
-function setProg(show,val,txt){ document.getElementById('progressWrap').style.display=show?'block':'none'; document.getElementById('progressBar').style.width=val+'%'; document.getElementById('progressText').textContent=txt||''; document.getElementById('extractBtn').disabled=show; }
-function loadDemo(){ hanjaData=DEMO.map(h=>({...h})); goToStep(2); showToast('데모 데이터 로드됨','ok'); }
+function setProg(show,val,txt){
+  document.getElementById('progWrap').style.display=show?'block':'none';
+  document.getElementById('progBar').style.width=val+'%';
+  document.getElementById('progTxt').textContent=txt||'';
+  document.getElementById('extBtn').disabled=show;
+}
+function loadDemo(){data=DEMO.map(h=>({...h}));renderWS();showSec('secWs');showToast('데모 데이터 로드됨','ok');}
 
-// ── EDIT TABLE ──
-function renderEditTable(){
-  const b=document.getElementById('editBody'); b.innerHTML='';
-  hanjaData.forEach((h,i)=>{
+// ── RENDER WORKSHEET ──
+function renderWS(){
+  hidHj={};hidHe={};allHj=false;allHe=false;
+  const bh=document.getElementById('btnHj');if(bh){bh.classList.remove('on');bh.textContent='한자 전체 가리기';}
+  const bu=document.getElementById('btnHe');if(bu){bu.classList.remove('on');bu.textContent='훈/음 전체 가리기';}
+
+  updateHeader();
+  const body=document.getElementById('wstBody');
+  body.innerHTML='';
+
+  // chunk into rows of COLS
+  for(let r=0;r<data.length;r+=COLS){
+    const row=data.slice(r,r+COLS);
+    const s=r+1, e=Math.min(r+COLS,data.length);
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td style="color:var(--text-light);font-size:0.78rem">${i+1}</td>
-      <td><input class="hanja-input" type="text" value="${esc(h.hanja)}" oninput="hanjaData[${i}].hanja=this.value"></td>
-      <td><input type="text" value="${esc(h.hun)}" oninput="hanjaData[${i}].hun=this.value"></td>
-      <td><input type="text" value="${esc(h.eum)}" oninput="hanjaData[${i}].eum=this.value"></td>
-      <td><input type="text" value="${esc(h.busu)}" oninput="hanjaData[${i}].busu=this.value"></td>
-      <td><input type="text" value="${esc(h.hoeksu)}" oninput="hanjaData[${i}].hoeksu=this.value" style="width:48px"></td>
-      <td><input type="text" value="${esc(h.level)}" oninput="hanjaData[${i}].level=this.value" style="width:38px"></td>
-      <td><button class="btn btn-danger btn-sm" onclick="removeRow(${i})">✕</button></td>`;
-    b.appendChild(tr);
-  });
-  document.getElementById('hanjaCount').textContent=`총 ${hanjaData.length}개`;
-}
-function addRow(){ hanjaData.push({hanja:'',hun:'',eum:'',busu:'',hoeksu:'',level:''}); renderEditTable(); setTimeout(()=>{const inp=document.querySelectorAll('#editBody .hanja-input');if(inp.length)inp[inp.length-1].focus();},50); }
-function removeRow(i){ hanjaData.splice(i,1); renderEditTable(); }
 
-// ── HIDE TOGGLE ──
-function toggleCellHanja(idx){
-  hideHanja[idx]=!hideHanja[idx];
-  const el=document.querySelector(`.cell-hanja[data-idx="${idx}"]`);
-  if(el) el.classList.toggle('hidden',!!hideHanja[idx]);
+    // Number cell
+    const numTd=document.createElement('td');
+    numTd.className='num-td';
+    numTd.innerHTML=`${s}<br>~<br>${e}`;
+    tr.appendChild(numTd);
+
+    // Data cells
+    for(let c=0;c<COLS;c++){
+      const gi=r+c;
+      const h=row[c];
+      const td=document.createElement('td');
+      if(!h){td.className='emp-td';tr.appendChild(td);continue;}
+      td.className='hj-td';
+      td.innerHTML=`<div class="cell-in">
+        <div class="he-zone" data-gi="${gi}" onclick="onHeClick(${gi})">${esc(h.hun)} ${esc(h.eum)}</div>
+        <div class="hj-zone" data-gi="${gi}" onclick="onHjClick(${gi})">${esc(h.hanja)}</div>
+      </div>`;
+      tr.appendChild(td);
+    }
+
+    // Grade cell
+    const gTd=document.createElement('td');
+    gTd.className='grd-td';
+    gTd.textContent=row[0]?.level||'';
+    tr.appendChild(gTd);
+
+    body.appendChild(tr);
+  }
 }
-function toggleCellHun(idx){
-  hideHun[idx]=!hideHun[idx];
-  const el=document.querySelector(`.cell-huneum[data-idx="${idx}"]`);
-  if(el) el.classList.toggle('hidden',!!hideHun[idx]);
+
+// ── CLICK HANDLERS ──
+function onHeClick(gi){
+  if(editMode){openPopup(gi);return;}
+  hidHe[gi]=!hidHe[gi];
+  const el=document.querySelector(`.he-zone[data-gi="${gi}"]`);
+  if(el)el.classList.toggle('hid',!!hidHe[gi]);
 }
-function toggleAllHanja(){
-  allHanjaHidden=!allHanjaHidden;
-  document.querySelectorAll('.cell-hanja').forEach(el=>el.classList.toggle('hidden',allHanjaHidden));
-  const btn=document.getElementById('btnHideHanja');
-  btn.classList.toggle('on',allHanjaHidden);
-  btn.textContent=allHanjaHidden?'한자 전체 보이기':'한자 전체 가리기';
+function onHjClick(gi){
+  if(editMode){openPopup(gi);return;}
+  hidHj[gi]=!hidHj[gi];
+  const el=document.querySelector(`.hj-zone[data-gi="${gi}"]`);
+  if(el)el.classList.toggle('hid',!!hidHj[gi]);
 }
-function toggleAllHun(){
-  allHunHidden=!allHunHidden;
-  document.querySelectorAll('.cell-huneum').forEach(el=>el.classList.toggle('hidden',allHunHidden));
-  const btn=document.getElementById('btnHideHun');
-  btn.classList.toggle('on',allHunHidden);
-  btn.textContent=allHunHidden?'훈/음 전체 보이기':'훈/음 전체 가리기';
+
+// ── GLOBAL HIDE ──
+function togAllHj(){
+  allHj=!allHj;
+  document.querySelectorAll('.hj-zone').forEach(el=>el.classList.toggle('hid',allHj));
+  const btn=document.getElementById('btnHj');
+  btn.classList.toggle('on',allHj);
+  btn.textContent=allHj?'한자 전체 보이기':'한자 전체 가리기';
+}
+function togAllHe(){
+  allHe=!allHe;
+  document.querySelectorAll('.he-zone').forEach(el=>el.classList.toggle('hid',allHe));
+  const btn=document.getElementById('btnHe');
+  btn.classList.toggle('on',allHe);
+  btn.textContent=allHe?'훈/음 전체 보이기':'훈/음 전체 가리기';
 }
 function resetAll(){
-  hideHanja={}; hideHun={}; allHanjaHidden=false; allHunHidden=false;
-  document.querySelectorAll('.cell-hanja,.cell-huneum').forEach(el=>el.classList.remove('hidden'));
-  const bh=document.getElementById('btnHideHanja'); if(bh){bh.classList.remove('on');bh.textContent='한자 전체 가리기';}
-  const bu=document.getElementById('btnHideHun'); if(bu){bu.classList.remove('on');bu.textContent='훈/음 전체 가리기';}
+  hidHj={};hidHe={};allHj=false;allHe=false;
+  document.querySelectorAll('.hj-zone,.he-zone').forEach(el=>el.classList.remove('hid'));
+  const bh=document.getElementById('btnHj');if(bh){bh.classList.remove('on');bh.textContent='한자 전체 가리기';}
+  const bu=document.getElementById('btnHe');if(bu){bu.classList.remove('on');bu.textContent='훈/음 전체 가리기';}
 }
 
-// ── RENDER PREVIEW ──
-function renderPreview(){
-  hideHanja={}; hideHun={}; allHanjaHidden=false; allHunHidden=false;
-  const bh=document.getElementById('btnHideHanja'); if(bh){bh.classList.remove('on');bh.textContent='한자 전체 가리기';}
-  const bu=document.getElementById('btnHideHun'); if(bu){bu.classList.remove('on');bu.textContent='훈/음 전체 가리기';}
-
-  const ws=document.getElementById('worksheet');
-  const title=document.getElementById('wsTitle').value||'한자 학습지';
-  const name=document.getElementById('wsName').value||'';
-
-  if(!hanjaData.length){ ws.innerHTML='<p style="color:var(--text-light);text-align:center;padding:40px">데이터가 없습니다.</p>'; return; }
-
-  // Split into rows of COLS
-  const rows=[];
-  for(let i=0;i<hanjaData.length;i+=COLS) rows.push(hanjaData.slice(i,i+COLS));
-
-  let html=`<div class="worksheet-header">
-    <div class="ws-title-text">${esc(title)}</div>
-    <div class="ws-name-area">이름:<span class="blank">${esc(name)}</span>&nbsp;&nbsp;날짜:<span class="blank"></span></div>
-  </div>
-  <table class="ws-table">
-    <colgroup><col style="width:28px">${'<col>'.repeat(COLS)}<col style="width:30px"></colgroup>
-    <thead><tr>
-      <th class="ws-num-col">번호</th>
-      <th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th>
-      <th class="ws-grade-col">급</th>
-    </tr></thead>
-    <tbody>`;
-
-  rows.forEach((row,ri)=>{
-    const s=ri*COLS+1, e2=Math.min((ri+1)*COLS,hanjaData.length);
-    html+=`<tr><td class="ws-num-col">${s}<br>~<br>${e2}</td>`;
-    for(let ci=0;ci<COLS;ci++){
-      const h=row[ci], gi=ri*COLS+ci;
-      if(!h){ html+=`<td class="ws-cell-empty"></td>`; continue; }
-      const he=`${esc(h.hun)} ${esc(h.eum)}`.trim();
-      html+=`<td class="ws-cell">
-        <div class="cell-inner">
-          <div class="cell-huneum" data-idx="${gi}" onclick="toggleCellHun(${gi})" title="클릭: 훈/음 가리기">${he}</div>
-          <div class="cell-hanja" data-idx="${gi}" onclick="toggleCellHanja(${gi})" title="클릭: 한자 가리기">${esc(h.hanja)}</div>
-        </div>
-      </td>`;
-    }
-    html+=`<td class="ws-grade-col">${esc(row[0]?.level||'')}</td></tr>`;
-  });
-
-  html+=`</tbody></table>`;
-  ws.innerHTML=html;
+// ── EDIT MODE ──
+function togEditMode(){
+  editMode=!editMode;
+  document.body.classList.toggle('edit-mode',editMode);
+  const btn=document.getElementById('btnEdit');
+  const hint=document.getElementById('modeHint');
+  if(editMode){
+    btn.classList.add('edit-on');
+    btn.textContent='✏️ 편집 중';
+    hint.textContent='· 셀 클릭으로 내용 수정';
+  } else {
+    btn.classList.remove('edit-on');
+    btn.textContent='✏️ 편집 모드';
+    hint.textContent='· 한자/훈음 클릭으로 개별 가리기';
+    closePopup();
+  }
 }
 
-// ── NAVIGATION ──
-function goToStep(n){
-  if(n===2&&!hanjaData.length){showToast('먼저 데이터를 추출하거나 데모를 불러오세요.','err');return;}
-  if(n===2) renderEditTable();
-  if(n===3) renderPreview();
-  currentStep=n;
-  ['sec1','sec2','sec3'].forEach((id,idx)=>document.getElementById(id).classList.toggle('show',idx+1===n));
-  [1,2,3].forEach(idx=>{const el=document.getElementById(`step${idx}-ind`);el.classList.remove('active','done');if(idx<n)el.classList.add('done');else if(idx===n)el.classList.add('active');});
-  window.scrollTo({top:0,behavior:'smooth'});
+// ── EDIT POPUP ──
+function openPopup(gi){
+  editIdx=gi;
+  const h=data[gi];
+  if(!h)return;
+  document.getElementById('epHj').value=h.hanja||'';
+  document.getElementById('epHun').value=h.hun||'';
+  document.getElementById('epEum').value=h.eum||'';
+  document.getElementById('epLv').value=h.level||'';
+
+  // Position popup near the cell
+  const cellEl=document.querySelector(`.hj-zone[data-gi="${gi}"]`);
+  const pop=document.getElementById('editPopup');
+  pop.classList.add('show');
+  pop.style.position='fixed';
+
+  if(cellEl){
+    const rect=cellEl.getBoundingClientRect();
+    let top=rect.bottom+6, left=rect.left;
+    // Keep in viewport
+    if(top+200>window.innerHeight)top=rect.top-200;
+    if(left+180>window.innerWidth)left=window.innerWidth-190;
+    if(left<6)left=6;
+    pop.style.top=top+'px';
+    pop.style.left=left+'px';
+  }
+  document.getElementById('epHj').focus();
+}
+function closePopup(){
+  document.getElementById('editPopup').classList.remove('show');
+  editIdx=-1;
+}
+function applyEdit(){
+  if(editIdx<0)return;
+  data[editIdx]={
+    hanja:document.getElementById('epHj').value.trim(),
+    hun:document.getElementById('epHun').value.trim(),
+    eum:document.getElementById('epEum').value.trim(),
+    level:document.getElementById('epLv').value.trim(),
+  };
+  closePopup();
+  renderWS();
+  showToast('수정됨','ok');
+}
+function deleteCell(){
+  if(editIdx<0)return;
+  if(!confirm('이 한자를 삭제할까요?'))return;
+  data.splice(editIdx,1);
+  closePopup();
+  renderWS();
+  showToast('삭제됨','ok');
+}
+document.getElementById('epHj').addEventListener('keydown',e=>{if(e.key==='Enter')applyEdit();});
+document.getElementById('epEum').addEventListener('keydown',e=>{if(e.key==='Enter')applyEdit();});
+
+// ── ADD ROW ──
+function addRow(){
+  data.push({hanja:'',hun:'',eum:'',level:''});
+  renderWS();
+  // Open popup on the last cell
+  if(!editMode)togEditMode();
+  setTimeout(()=>openPopup(data.length-1),50);
 }
 
 // ── MODAL ──
-function openModal(id){document.getElementById(id).classList.add('show');}
-function closeModal(id){document.getElementById(id).classList.remove('show');}
-document.addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay'))e.target.classList.remove('show');});
+function openMo(id){document.getElementById(id).classList.add('show');}
+function closeMo(id){document.getElementById(id).classList.remove('show');}
+document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.target.classList.remove('show');});
 
 function setWorkerCode(){
   document.getElementById('workerCode').textContent=`export default {
@@ -766,18 +819,17 @@ function setWorkerCode(){
         headers: { ...cors, 'Content-Type': 'application/json' }
       });
     }
-
     return new Response('Vocab Proxy OK', { headers: cors });
   }
 };`;
 }
-function copyWorkerCode(){ navigator.clipboard.writeText(document.getElementById('workerCode').textContent).then(()=>showToast('코드 복사됨!','ok')); }
+function copyWorker(){navigator.clipboard.writeText(document.getElementById('workerCode').textContent).then(()=>showToast('복사됨!','ok'));}
 
 // ── TOAST ──
 let toastT=null;
-function showToast(msg,type='ok'){ const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast show toast-${type}`; if(toastT)clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),3200); }
+function showToast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast show ${type}`;if(toastT)clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);}
 
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 </script>
 </body>
 </html>
