@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한자 학습지 생성기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fdf6e3;
+  --header-bg: #1a1a2e;
+  --gold: #c9a227;
+  --gold-light: #e8c547;
+  --gold-dark: #a07820;
+  --text: #2c2416;
+  --text-light: #6b5d4a;
+  --card-bg: #fff8f0;
+  --border: #d4c4a0;
+  --border-light: #e8dcc8;
+  --danger: #c0392b;
+  --success: #27ae60;
+  --blue: #2980b9;
+  --shadow: 0 2px 12px rgba(44,36,22,0.10);
+  --shadow-lg: 0 8px 32px rgba(44,36,22,0.16);
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--header-bg);
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Noto Serif KR', serif;
+  color: var(--gold);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.logo-icon {
+  width: 36px; height: 36px;
+  background: var(--gold);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; color: var(--header-bg); font-weight: 700;
+}
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.btn-icon {
+  background: none; border: 1px solid rgba(201,162,39,0.4);
+  color: var(--gold); border-radius: 6px;
+  padding: 6px 12px; font-size: 0.8rem; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.2s;
+}
+.btn-icon:hover { background: rgba(201,162,39,0.15); }
+
+/* ── MAIN CONTENT ── */
+main { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+
+/* ── STEP INDICATOR ── */
+.steps {
+  display: flex; align-items: center;
+  margin-bottom: 28px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 12px 20px;
+  gap: 0;
+}
+.step {
+  display: flex; align-items: center; gap: 8px;
+  flex: 1; cursor: pointer;
+  padding: 4px 8px; border-radius: 6px;
+  transition: background 0.2s;
+}
+.step:hover { background: rgba(201,162,39,0.08); }
+.step-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 700;
+  color: var(--text-light);
+  transition: all 0.3s; flex-shrink: 0;
+}
+.step-label { font-size: 0.82rem; color: var(--text-light); font-weight: 500; }
+.step.active .step-num { background: var(--gold); border-color: var(--gold); color: #fff; }
+.step.active .step-label { color: var(--text); font-weight: 700; }
+.step.done .step-num { background: var(--success); border-color: var(--success); color: #fff; }
+.step-sep { width: 24px; height: 2px; background: var(--border-light); flex-shrink: 0; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 1.05rem; font-weight: 700;
+  color: var(--text); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title::before {
+  content: ''; display: inline-block;
+  width: 4px; height: 18px;
+  background: var(--gold); border-radius: 2px;
+}
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: 7px;
+  font-size: 0.88rem; font-weight: 600;
+  cursor: pointer; border: none;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.2s; text-decoration: none;
+}
+.btn-primary {
+  background: var(--gold); color: var(--header-bg);
+}
+.btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(201,162,39,0.35); }
+.btn-secondary {
+  background: transparent; color: var(--gold);
+  border: 1.5px solid var(--gold);
+}
+.btn-secondary:hover { background: rgba(201,162,39,0.08); }
+.btn-danger {
+  background: transparent; color: var(--danger);
+  border: 1.5px solid var(--danger);
+}
+.btn-danger:hover { background: rgba(192,57,43,0.08); }
+.btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+/* ── UPLOAD AREA ── */
+.upload-area {
+  border: 2.5px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 44px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(201,162,39,0.02);
+}
+.upload-area:hover, .upload-area.drag-over {
+  border-color: var(--gold);
+  background: rgba(201,162,39,0.06);
+}
+.upload-icon { font-size: 2.8rem; margin-bottom: 12px; }
+.upload-title { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.upload-hint { font-size: 0.82rem; color: var(--text-light); }
+
+.upload-methods {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; margin-top: 20px;
+}
+@media(max-width:640px) { .upload-methods { grid-template-columns: 1fr; } }
+
+.method-btn {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 14px 16px;
+  cursor: pointer; text-align: center;
+  transition: all 0.2s; font-family: 'Noto Sans KR', sans-serif;
+}
+.method-btn:hover { border-color: var(--gold); background: rgba(201,162,39,0.06); }
+.method-icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+.method-label { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+.method-sub { font-size: 0.75rem; color: var(--text-light); }
+
+/* QR area */
+.qr-area {
+  display: none;
+  flex-direction: column; align-items: center;
+  gap: 12px; padding: 16px;
+  background: #fff; border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+}
+.qr-area.show { display: flex; }
+#qrcode canvas, #qrcode img { border-radius: 6px; }
+.qr-hint { font-size: 0.82rem; color: var(--text-light); text-align: center; }
+.qr-session { font-size: 0.75rem; color: var(--text-light); font-family: monospace; }
+.poll-status {
+  font-size: 0.8rem; padding: 6px 12px;
+  border-radius: 20px; font-weight: 600;
+}
+.poll-status.waiting { background: #fff3cd; color: #856404; }
+.poll-status.received { background: #d4edda; color: #155724; }
+
+/* File preview */
+.file-preview {
+  display: none; align-items: center; gap: 12px;
+  padding: 14px; background: rgba(201,162,39,0.06);
+  border: 1px solid var(--border); border-radius: 8px; margin-top: 12px;
+}
+.file-preview.show { display: flex; }
+.file-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+.file-thumb-pdf { width: 60px; height: 60px; background: #e74c3c; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.75rem; font-weight: 700; }
+.file-info { flex: 1; }
+.file-name { font-size: 0.88rem; font-weight: 600; }
+.file-size { font-size: 0.78rem; color: var(--text-light); }
+
+/* ── API KEY ── */
+.api-row {
+  display: flex; gap: 8px; align-items: center;
+}
+.api-row input {
+  flex: 1; padding: 9px 12px;
+  border: 1.5px solid var(--border); border-radius: 7px;
+  font-family: monospace; font-size: 0.82rem;
+  background: #fff; color: var(--text);
+  transition: border-color 0.2s;
+}
+.api-row input:focus { outline: none; border-color: var(--gold); }
+.api-status { font-size: 0.78rem; margin-top: 4px; }
+.api-status.ok { color: var(--success); }
+.api-status.err { color: var(--danger); }
+
+/* ── EXTRACT PROGRESS ── */
+.progress-bar-wrap {
+  background: var(--border-light); border-radius: 8px;
+  height: 8px; overflow: hidden; margin: 12px 0;
+}
+.progress-bar {
+  height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  border-radius: 8px; transition: width 0.4s ease;
+  width: 0%;
+}
+.progress-text { font-size: 0.82rem; color: var(--text-light); text-align: center; }
+
+/* ── EDIT TABLE ── */
+.table-wrap { overflow-x: auto; }
+table.edit-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 0.83rem;
+}
+table.edit-table th {
+  background: var(--header-bg); color: var(--gold);
+  padding: 9px 10px; text-align: center;
+  font-weight: 600; font-size: 0.8rem;
+  white-space: nowrap;
+}
+table.edit-table td {
+  padding: 6px 6px; border-bottom: 1px solid var(--border-light);
+  text-align: center; vertical-align: middle;
+}
+table.edit-table tr:hover td { background: rgba(201,162,39,0.04); }
+table.edit-table input[type="text"] {
+  width: 100%; padding: 5px 7px;
+  border: 1.5px solid transparent; border-radius: 5px;
+  font-family: 'Noto Serif KR', serif; font-size: 0.88rem;
+  background: transparent; color: var(--text); text-align: center;
+  transition: all 0.15s;
+}
+table.edit-table input[type="text"]:focus {
+  outline: none; border-color: var(--gold);
+  background: #fff; box-shadow: 0 0 0 3px rgba(201,162,39,0.12);
+}
+.hanja-input { font-size: 1.3rem !important; }
+.num-col { color: var(--text-light); font-size: 0.78rem; width: 36px; }
+
+/* ── COLUMN CONFIG ── */
+.col-config {
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  gap: 8px; margin-bottom: 16px;
+}
+@media(max-width:640px) { .col-config { grid-template-columns: repeat(3,1fr); } }
+
+.col-toggle {
+  border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 10px 8px;
+  cursor: pointer; text-align: center;
+  transition: all 0.2s; background: var(--card-bg);
+  user-select: none;
+}
+.col-toggle.active { border-color: var(--gold); background: rgba(201,162,39,0.08); }
+.col-toggle-header {
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--text-light); margin-bottom: 6px;
+}
+.col-toggle.active .col-toggle-header { color: var(--gold-dark); }
+.hide-toggles { display: flex; flex-direction: column; gap: 4px; }
+.hide-toggle {
+  display: flex; align-items: center; justify-content: center;
+  gap: 4px; font-size: 0.7rem; color: var(--text-light);
+}
+.toggle-switch {
+  position: relative; width: 28px; height: 15px;
+}
+.toggle-switch input { display: none; }
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: var(--border); border-radius: 8px; cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute; width: 11px; height: 11px;
+  left: 2px; top: 2px;
+  background: #fff; border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--gold); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(13px); }
+
+/* ── PREVIEW TABLE ── */
+.preview-controls {
+  display: flex; gap: 8px; align-items: center;
+  flex-wrap: wrap; margin-bottom: 16px;
+}
+.preview-title-input {
+  flex: 1; min-width: 200px;
+  padding: 8px 12px; border: 1.5px solid var(--border);
+  border-radius: 7px; font-family: 'Noto Serif KR', serif;
+  font-size: 0.95rem; background: #fff; color: var(--text);
+}
+.preview-title-input:focus { outline: none; border-color: var(--gold); }
+.name-input {
+  width: 150px; padding: 8px 12px;
+  border: 1.5px solid var(--border); border-radius: 7px;
+  font-size: 0.85rem; background: #fff; color: var(--text);
+}
+.name-input:focus { outline: none; border-color: var(--gold); }
+
+/* The actual worksheet */
+.worksheet-wrap { overflow-x: auto; }
+.worksheet {
+  width: 100%;
+  font-family: 'Noto Serif KR', serif;
+}
+.worksheet-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 10px;
+  border-bottom: 2px solid #222; padding-bottom: 6px;
+}
+.ws-title { font-size: 1.2rem; font-weight: 700; }
+.ws-name { font-size: 0.9rem; }
+.ws-name span { display: inline-block; width: 100px; border-bottom: 1.5px solid #222; margin-left: 4px; }
+
+table.ws-table {
+  width: 100%; border-collapse: collapse;
+  table-layout: fixed;
+}
+table.ws-table th {
+  background: #1a1a2e; color: #c9a227;
+  padding: 7px 4px; font-size: 0.72rem;
+  text-align: center; border: 1px solid #333;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 600; line-height: 1.3;
+  word-break: keep-all;
+}
+table.ws-table td {
+  border: 1px solid #ccc;
+  text-align: center; vertical-align: middle;
+  padding: 4px 2px;
+}
+.ws-num {
+  background: #f5f0e8; font-size: 0.7rem;
+  color: #666; width: 28px;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.ws-grade {
+  background: #f5f0e8; font-size: 0.7rem;
+  color: #333; width: 28px;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.ws-cell { position: relative; height: 58px; }
+.ws-hanja {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 1.45rem; font-weight: 700;
+  line-height: 1.2; display: block;
+}
+.ws-info {
+  font-size: 0.62rem; color: #444;
+  font-family: 'Noto Sans KR', sans-serif;
+  line-height: 1.3;
+}
+.ws-blank-char {
+  display: inline-block;
+  width: 1.4rem; height: 1.4rem;
+  border: 1.5px solid #555;
+  vertical-align: middle;
+}
+.ws-blank-text {
+  display: inline-block;
+  width: 80%; border-bottom: 1.5px solid #555;
+  min-width: 30px; height: 0.9em;
+  vertical-align: middle;
+}
+.ws-section-row td {
+  background: #e8e0d0; font-size: 0.7rem;
+  color: #555; padding: 3px 6px; text-align: left;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 200; display: none;
+  align-items: center; justify-content: center;
+  padding: 16px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 28px; max-width: 520px; width: 100%;
+  box-shadow: var(--shadow-lg);
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 1.1rem; font-weight: 700;
+  margin-bottom: 16px; color: var(--text);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-close {
+  background: none; border: none; font-size: 1.3rem;
+  cursor: pointer; color: var(--text-light);
+}
+.modal pre {
+  background: #1a1a2e; color: #c9a227;
+  padding: 14px; border-radius: 8px;
+  font-size: 0.75rem; overflow-x: auto;
+  line-height: 1.6; font-family: 'Courier New', monospace;
+}
+.modal p { font-size: 0.85rem; color: var(--text-light); margin-bottom: 10px; line-height: 1.6; }
+.modal ol { font-size: 0.85rem; color: var(--text-light); padding-left: 20px; line-height: 1.9; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--header-bg); color: #fff;
+  padding: 12px 20px; border-radius: 8px;
+  font-size: 0.85rem; box-shadow: var(--shadow-lg);
+  z-index: 999; transform: translateY(80px);
+  opacity: 0; transition: all 0.3s; pointer-events: none;
+  max-width: 320px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.toast-ok { border-left: 4px solid var(--gold); }
+.toast.toast-err { border-left: 4px solid var(--danger); }
+
+/* ── MOBILE UPLOAD PAGE ── */
+.mobile-upload-page {
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 100vh; padding: 24px;
+  background: var(--bg);
+}
+.mobile-upload-page.show { display: flex; }
+.mobile-upload-page .logo-big {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 1.6rem; color: var(--gold);
+  margin-bottom: 8px; font-weight: 700;
+}
+.mobile-upload-page .sub-title {
+  color: var(--text-light); font-size: 0.88rem;
+  margin-bottom: 32px;
+}
+.mobile-btns { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 320px; }
+.mobile-btn {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 20px; border-radius: 12px;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  cursor: pointer; font-size: 1rem; font-weight: 600;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: var(--text); transition: all 0.2s;
+}
+.mobile-btn:hover { border-color: var(--gold); background: rgba(201,162,39,0.06); }
+.mobile-btn-icon { font-size: 1.8rem; }
+.mobile-status {
+  margin-top: 20px; padding: 12px 20px;
+  border-radius: 8px; font-size: 0.88rem;
+  text-align: center; display: none;
+}
+.mobile-status.show { display: block; }
+.mobile-status.ok { background: #d4edda; color: #155724; }
+.mobile-status.err { background: #f8d7da; color: #721c24; }
+
+/* ── SECTIONS hide/show ── */
+.section { display: none; }
+.section.show { display: block; }
+
+/* ── PRINT ── */
+@media print {
+  header, .steps, .card:not(.preview-card), .preview-controls,
+  .no-print, button, .toast, .modal-overlay { display: none !important; }
+  body { background: #fff; font-size: 11pt; }
+  main { max-width: 100%; padding: 0; margin: 0; }
+  .section { display: block !important; }
+  .card.preview-card { border: none; box-shadow: none; padding: 0; background: #fff; }
+  .worksheet-wrap { overflow: visible; }
+  table.ws-table th { background: #1a1a2e !important; color: #c9a227 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .ws-section-row td { background: #e8e0d0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .ws-num, .ws-grade { background: #f5f0e8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  table.ws-table { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<!-- Mobile upload page -->
+<div class="mobile-upload-page" id="mobileUploadPage">
+  <div class="logo-big">漢字 학습지</div>
+  <div class="sub-title">사진을 찍어 학습지를 만드세요</div>
+  <input type="file" id="mobileFileInput" accept="image/*" capture="environment" style="display:none">
+  <input type="file" id="mobileGalleryInput" accept="image/*" style="display:none">
+  <div class="mobile-btns">
+    <label class="mobile-btn" onclick="document.getElementById('mobileFileInput').click()">
+      <span class="mobile-btn-icon">📷</span>
+      <div><div>카메라로 촬영</div><div style="font-size:0.75rem;color:var(--text-light);font-weight:400">지금 바로 촬영하기</div></div>
+    </label>
+    <label class="mobile-btn" onclick="document.getElementById('mobileGalleryInput').click()">
+      <span class="mobile-btn-icon">🖼️</span>
+      <div><div>갤러리에서 선택</div><div style="font-size:0.75rem;color:var(--text-light);font-weight:400">저장된 사진 불러오기</div></div>
+    </label>
+  </div>
+  <div class="mobile-status" id="mobileStatus"></div>
+</div>
+
+<!-- Main App -->
+<div id="mainApp">
+<header>
+  <div class="logo">
+    <div class="logo-icon">漢</div>
+    한자 학습지 생성기
+  </div>
+  <div class="header-actions">
+    <button class="btn-icon" onclick="openWorkerModal()">⚙️ Worker 설정</button>
+    <button class="btn-icon" onclick="openApiModal()">🔑 API 키</button>
+  </div>
+</header>
+
+<main>
+  <!-- Step Indicator -->
+  <div class="steps">
+    <div class="step active" id="step1-ind" onclick="goToStep(1)">
+      <div class="step-num">1</div>
+      <div class="step-label">업로드 & 추출</div>
+    </div>
+    <div class="step-sep"></div>
+    <div class="step" id="step2-ind" onclick="goToStep(2)">
+      <div class="step-num">2</div>
+      <div class="step-label">데이터 편집</div>
+    </div>
+    <div class="step-sep"></div>
+    <div class="step" id="step3-ind" onclick="goToStep(3)">
+      <div class="step-num">3</div>
+      <div class="step-label">미리보기 & 인쇄</div>
+    </div>
+  </div>
+
+  <!-- STEP 1: Upload -->
+  <div class="section show" id="sec1">
+    <div class="card">
+      <div class="card-title">파일 업로드</div>
+      <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">📄</div>
+        <div class="upload-title">PDF 또는 이미지 파일을 여기에 드래그하세요</div>
+        <div class="upload-hint">JPG · PNG · PDF 지원 · 클릭하거나 Ctrl+V로 붙여넣기 가능</div>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,image/*" style="display:none">
+
+      <div class="upload-methods">
+        <div class="method-btn" onclick="document.getElementById('fileInput').click()">
+          <span class="method-icon">💻</span>
+          <div class="method-label">PC 파일 선택</div>
+          <div class="method-sub">클릭하여 파일 탐색기 열기</div>
+        </div>
+        <div class="method-btn" id="qrMethodBtn" onclick="showQR()">
+          <span class="method-icon">📱</span>
+          <div class="method-label">핸드폰으로 촬영</div>
+          <div class="method-sub">QR 코드로 모바일 연결</div>
+        </div>
+      </div>
+
+      <div class="qr-area" id="qrArea">
+        <div style="font-size:0.88rem;font-weight:600;color:var(--text)">핸드폰으로 QR 코드를 스캔하세요</div>
+        <div id="qrcode"></div>
+        <div class="qr-hint">카메라 앱으로 QR을 스캔하면 촬영 화면이 열립니다</div>
+        <div class="qr-session" id="qrSessionId"></div>
+        <div class="poll-status waiting" id="pollStatus">📡 연결 대기 중...</div>
+        <button class="btn btn-secondary btn-sm" onclick="hideQR()">취소</button>
+      </div>
+
+      <div class="file-preview" id="filePreview">
+        <div id="fileThumbWrap"></div>
+        <div class="file-info">
+          <div class="file-name" id="fileName">-</div>
+          <div class="file-size" id="fileSize">-</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="clearFile()">✕ 제거</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">API 키 확인</div>
+      <div class="api-row">
+        <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off">
+        <button class="btn btn-secondary btn-sm" onclick="toggleApiVis()">보기</button>
+        <button class="btn btn-secondary btn-sm" onclick="saveApiKey()">저장</button>
+      </div>
+      <div class="api-status" id="apiStatus"></div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="extractBtn" onclick="extractData()">
+        ✨ 한자 데이터 추출
+      </button>
+      <button class="btn btn-secondary" onclick="loadDemo()">
+        📚 데모 데이터 불러오기
+      </button>
+    </div>
+
+    <div id="progressWrap" style="margin-top:16px;display:none;">
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="progress-text" id="progressText">Claude API에 요청 중...</div>
+    </div>
+  </div>
+
+  <!-- STEP 2: Edit -->
+  <div class="section" id="sec2">
+    <div class="card">
+      <div class="card-title">열 설정 — 각 열에서 숨길 항목을 선택하세요</div>
+      <div class="col-config" id="colConfig"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        한자 데이터 편집
+        <span style="font-size:0.8rem;font-weight:400;color:var(--text-light);margin-left:auto" id="hanjaCount"></span>
+      </div>
+      <div class="table-wrap">
+        <table class="edit-table" id="editTable">
+          <thead>
+            <tr>
+              <th style="width:36px">#</th>
+              <th>한자</th>
+              <th>훈 (뜻)</th>
+              <th>음 (읽기)</th>
+              <th>부수</th>
+              <th>획수</th>
+              <th>급수</th>
+              <th style="width:60px">삭제</th>
+            </tr>
+          </thead>
+          <tbody id="editBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="addRow()">+ 행 추가</button>
+        <button class="btn btn-primary btn-sm" onclick="goToStep(3)">→ 미리보기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Preview -->
+  <div class="section" id="sec3">
+    <div class="card preview-card">
+      <div class="preview-controls no-print">
+        <input class="preview-title-input" id="wsTitle" placeholder="학습지 제목 입력..." value="한자 학습지">
+        <input class="name-input" id="wsName" placeholder="이름:">
+        <button class="btn btn-primary" onclick="window.print()">🖨️ 인쇄</button>
+        <button class="btn btn-secondary" onclick="goToStep(2)">← 수정</button>
+      </div>
+      <div class="worksheet-wrap">
+        <div class="worksheet" id="worksheet"></div>
+      </div>
+    </div>
+  </div>
+</main>
+</div><!-- #mainApp -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- API Key Modal -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal">
+    <div class="modal-title">
+      🔑 API 키 설정
+      <button class="modal-close" onclick="closeModal('apiModal')">✕</button>
+    </div>
+    <p>Anthropic Claude API 키를 입력하세요. 키는 브라우저 localStorage에만 저장되며, 영어 어휘 앱과 공유됩니다 (<code>vocabApiKey</code>).</p>
+    <div class="api-row">
+      <input type="password" id="apiKeyModal" placeholder="sk-ant-api03-...">
+      <button class="btn btn-secondary btn-sm" onclick="toggleApiVisModal()">보기</button>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px;">
+      <button class="btn btn-primary btn-sm" onclick="saveApiKeyModal()">저장</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('apiModal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- Worker Modal -->
+<div class="modal-overlay" id="workerModal">
+  <div class="modal">
+    <div class="modal-title">
+      ⚙️ Cloudflare Worker 업데이트
+      <button class="modal-close" onclick="closeModal('workerModal')">✕</button>
+    </div>
+    <p>핸드폰 촬영 기능을 사용하려면 기존 <code>vocab-proxy</code> Worker에 아래 코드를 추가해야 합니다.</p>
+    <ol>
+      <li>Cloudflare 대시보드 → Workers & Pages → <b>vocab-proxy</b></li>
+      <li>Edit code 클릭 후 아래 코드를 기존 코드에 병합</li>
+      <li>Save and Deploy</li>
+    </ol>
+    <pre id="workerCode">// Worker 코드 로딩 중...</pre>
+    <div style="margin-top:12px;">
+      <button class="btn btn-primary btn-sm" onclick="copyWorkerCode()">📋 코드 복사</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  CONSTANTS & STATE
+// ════════════════════════════════════════════════
+const PROXY_BASE = 'https://vocab-proxy.police6980.workers.dev';
+const API_KEY_LS = 'vocabApiKey';
+const MODEL = 'claude-haiku-4-5-20251001';
+
+// Column definitions: label, hide options
+const COL_DEFS = [
+  { id: 'c0', label: '훈 읽기',    hideHanja: false, hideHun: true,  hideEum: false },
+  { id: 'c1', label: '뜻 한자쓰기', hideHanja: true,  hideHun: false, hideEum: false },
+  { id: 'c2', label: '음 읽기쓰기', hideHanja: false, hideHun: false, hideEum: true  },
+  { id: 'c3', label: '음 읽기',    hideHanja: false, hideHun: true,  hideEum: false },
+  { id: 'c4', label: '한자 쓰기',  hideHanja: true,  hideHun: false, hideEum: false },
+  { id: 'c5', label: '뜻 한자쓰기', hideHanja: true,  hideHun: false, hideEum: true  },
+];
+
+// User-adjustable column settings
+let colSettings = COL_DEFS.map(c => ({
+  label: c.label,
+  hideHanja: c.hideHanja,
+  hideHun: c.hideHun,
+  hideEum: c.hideEum,
+}));
+
+let hanjaData = []; // [{hanja, hun, eum, busu, hoeksu, level}]
+let uploadedFile = null; // {base64, mediaType}
+let currentStep = 1;
+let pollInterval = null;
+let pollSid = null;
+
+// ════════════════════════════════════════════════
+//  DEMO DATA
+// ════════════════════════════════════════════════
+const DEMO_DATA = [
+  { hanja:'山', hun:'뫼',    eum:'산', busu:'山', hoeksu:'3', level:'8' },
+  { hanja:'水', hun:'물',    eum:'수', busu:'水', hoeksu:'4', level:'8' },
+  { hanja:'火', hun:'불',    eum:'화', busu:'火', hoeksu:'4', level:'8' },
+  { hanja:'木', hun:'나무',  eum:'목', busu:'木', hoeksu:'4', level:'8' },
+  { hanja:'金', hun:'쇠/성', eum:'금/김', busu:'金', hoeksu:'8', level:'7' },
+  { hanja:'土', hun:'흙',    eum:'토', busu:'土', hoeksu:'3', level:'8' },
+  { hanja:'日', hun:'날',    eum:'일', busu:'日', hoeksu:'4', level:'8' },
+  { hanja:'月', hun:'달',    eum:'월', busu:'月', hoeksu:'4', level:'8' },
+  { hanja:'人', hun:'사람',  eum:'인', busu:'人', hoeksu:'2', level:'8' },
+  { hanja:'大', hun:'큰',    eum:'대', busu:'大', hoeksu:'3', level:'8' },
+  { hanja:'小', hun:'작을',  eum:'소', busu:'小', hoeksu:'3', level:'8' },
+  { hanja:'中', hun:'가운데',eum:'중', busu:'丨', hoeksu:'4', level:'8' },
+  { hanja:'心', hun:'마음',  eum:'심', busu:'心', hoeksu:'4', level:'7' },
+  { hanja:'手', hun:'손',    eum:'수', busu:'手', hoeksu:'4', level:'7' },
+  { hanja:'足', hun:'발',    eum:'족', busu:'足', hoeksu:'7', level:'7' },
+  { hanja:'口', hun:'입',    eum:'구', busu:'口', hoeksu:'3', level:'8' },
+  { hanja:'耳', hun:'귀',    eum:'이', busu:'耳', hoeksu:'6', level:'7' },
+  { hanja:'目', hun:'눈',    eum:'목', busu:'目', hoeksu:'5', level:'7' },
+  { hanja:'學', hun:'배울',  eum:'학', busu:'子', hoeksu:'16', level:'7' },
+  { hanja:'校', hun:'학교',  eum:'교', busu:'木', hoeksu:'10', level:'7' },
+];
+
+// ════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════
+(function init() {
+  // Check if mobile upload mode
+  const params = new URLSearchParams(location.search);
+  const sid = params.get('upload');
+  if (sid) {
+    showMobileUploadPage(sid);
+    return;
+  }
+
+  // Load API key
+  const key = localStorage.getItem(API_KEY_LS) || '';
+  document.getElementById('apiKeyInput').value = key;
+  document.getElementById('apiKeyModal').value = key;
+  updateApiStatus();
+
+  // Setup drag & drop
+  setupDragDrop();
+
+  // Clipboard paste
+  document.addEventListener('paste', handlePaste);
+
+  // File input
+  document.getElementById('fileInput').addEventListener('change', e => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  // Mobile inputs
+  document.getElementById('mobileFileInput').addEventListener('change', e => {
+    if (e.target.files[0]) sendMobileFile(e.target.files[0]);
+  });
+  document.getElementById('mobileGalleryInput').addEventListener('change', e => {
+    if (e.target.files[0]) sendMobileFile(e.target.files[0]);
+  });
+
+  // Keyboard shortcut
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.key === 'p') { e.preventDefault(); if(currentStep===3) window.print(); }
+  });
+
+  renderColConfig();
+  setWorkerCode();
+})();
+
+// ════════════════════════════════════════════════
+//  MOBILE UPLOAD PAGE
+// ════════════════════════════════════════════════
+function showMobileUploadPage(sid) {
+  document.getElementById('mainApp').style.display = 'none';
+  const page = document.getElementById('mobileUploadPage');
+  page.classList.add('show');
+  // Store sid for upload
+  page.dataset.sid = sid;
+}
+
+async function sendMobileFile(file) {
+  const page = document.getElementById('mobileUploadPage');
+  const sid = page.dataset.sid;
+  const statusEl = document.getElementById('mobileStatus');
+  statusEl.textContent = '📤 전송 중...';
+  statusEl.className = 'mobile-status show';
+
+  try {
+    const base64 = await fileToBase64(file);
+    const mediaType = file.type || 'image/jpeg';
+    const resp = await fetch(`${PROXY_BASE}/upload/${sid}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base64, mediaType }),
+    });
+    if (resp.ok) {
+      statusEl.textContent = '✅ 전송 완료! PC 화면을 확인하세요.';
+      statusEl.className = 'mobile-status show ok';
+    } else {
+      throw new Error('서버 오류');
+    }
+  } catch (e) {
+    statusEl.textContent = '❌ 전송 실패: ' + e.message;
+    statusEl.className = 'mobile-status show err';
+  }
+}
+
+// ════════════════════════════════════════════════
+//  FILE HANDLING
+// ════════════════════════════════════════════════
+function setupDragDrop() {
+  const area = document.getElementById('uploadArea');
+  area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag-over'); });
+  area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
+  area.addEventListener('drop', e => {
+    e.preventDefault(); area.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+  // Prevent default click behavior from showing file dialog twice
+  area.addEventListener('click', e => {
+    if (e.target === area || e.target.classList.contains('upload-title') || e.target.classList.contains('upload-hint') || e.target.classList.contains('upload-icon')) {
+      document.getElementById('fileInput').click();
+    }
+  });
+}
+
+function handlePaste(e) {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      handleFile(item.getAsFile());
+      break;
+    }
+  }
+}
+
+async function handleFile(file) {
+  const allowed = ['image/jpeg','image/png','image/gif','image/webp','application/pdf'];
+  const ext = file.name.split('.').pop().toLowerCase();
+  const allowedExt = ['jpg','jpeg','png','gif','webp','pdf'];
+  if (!allowed.includes(file.type) && !allowedExt.includes(ext)) {
+    showToast('지원하지 않는 파일 형식입니다 (JPG/PNG/PDF만 가능)', 'err');
+    return;
+  }
+  const base64 = await fileToBase64(file);
+  const mediaType = file.type === 'application/pdf' ? 'application/pdf' : (file.type || 'image/jpeg');
+  uploadedFile = { base64, mediaType, name: file.name };
+
+  // Show preview
+  const preview = document.getElementById('filePreview');
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileSize').textContent = formatSize(file.size);
+  const thumbWrap = document.getElementById('fileThumbWrap');
+  if (file.type === 'application/pdf' || ext === 'pdf') {
+    thumbWrap.innerHTML = '<div class="file-thumb-pdf">PDF</div>';
+  } else {
+    thumbWrap.innerHTML = `<img class="file-thumb" src="data:${mediaType};base64,${base64}">`;
+  }
+  preview.classList.add('show');
+  showToast('파일이 로드되었습니다. "한자 데이터 추출"을 클릭하세요.', 'ok');
+}
+
+function clearFile() {
+  uploadedFile = null;
+  document.getElementById('filePreview').classList.remove('show');
+  document.getElementById('fileInput').value = '';
+  showToast('파일이 제거되었습니다.', 'ok');
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = () => res(reader.result.split(',')[1]);
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + 'B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + 'KB';
+  return (bytes/1048576).toFixed(1) + 'MB';
+}
+
+// ════════════════════════════════════════════════
+//  QR CODE & POLLING
+// ════════════════════════════════════════════════
+const QR_CDNS = [
+  'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+  'https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js',
+];
+
+async function loadQRLib() {
+  if (window.QRCode) return true;
+  for (const url of QR_CDNS) {
+    try {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = url; s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      });
+      if (window.QRCode) return true;
+    } catch {}
+  }
+  return false;
+}
+
+async function showQR() {
+  const ok = await loadQRLib();
+  if (!ok) { showToast('QR 라이브러리를 불러올 수 없습니다.', 'err'); return; }
+
+  // Generate session ID
+  pollSid = 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  const uploadUrl = `${location.origin}${location.pathname}?upload=${pollSid}`;
+
+  document.getElementById('qrSessionId').textContent = 'Session: ' + pollSid;
+  document.getElementById('qrcode').innerHTML = '';
+
+  new QRCode(document.getElementById('qrcode'), {
+    text: uploadUrl,
+    width: 180, height: 180,
+    colorDark: '#1a1a2e', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M,
+  });
+
+  document.getElementById('qrArea').classList.add('show');
+  document.getElementById('pollStatus').textContent = '📡 연결 대기 중...';
+  document.getElementById('pollStatus').className = 'poll-status waiting';
+
+  // Start polling
+  startPolling();
+}
+
+function hideQR() {
+  stopPolling();
+  document.getElementById('qrArea').classList.remove('show');
+}
+
+function startPolling() {
+  stopPolling();
+  pollInterval = setInterval(async () => {
+    try {
+      const resp = await fetch(`${PROXY_BASE}/poll/${pollSid}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && data.base64) {
+          stopPolling();
+          uploadedFile = { base64: data.base64, mediaType: data.mediaType || 'image/jpeg', name: '모바일_촬영.jpg' };
+          document.getElementById('pollStatus').textContent = '✅ 사진 수신 완료!';
+          document.getElementById('pollStatus').className = 'poll-status received';
+          // Show preview
+          document.getElementById('fileName').textContent = '모바일 촬영 이미지';
+          document.getElementById('fileSize').textContent = '';
+          document.getElementById('fileThumbWrap').innerHTML = `<img class="file-thumb" src="data:${data.mediaType};base64,${data.base64}">`;
+          document.getElementById('filePreview').classList.add('show');
+          showToast('모바일 사진을 수신했습니다! 추출 버튼을 클릭하세요.', 'ok');
+        }
+      }
+    } catch {}
+  }, 2500);
+}
+
+function stopPolling() {
+  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+}
+
+// ════════════════════════════════════════════════
+//  API KEY
+// ════════════════════════════════════════════════
+function updateApiStatus() {
+  const key = localStorage.getItem(API_KEY_LS) || '';
+  const el = document.getElementById('apiStatus');
+  if (key.startsWith('sk-ant-')) {
+    el.textContent = '✓ API 키가 저장되어 있습니다'; el.className = 'api-status ok';
+  } else if (key) {
+    el.textContent = '⚠ API 키 형식이 올바르지 않습니다'; el.className = 'api-status err';
+  } else {
+    el.textContent = '⚠ API 키가 설정되지 않았습니다'; el.className = 'api-status err';
+  }
+}
+function saveApiKey() {
+  const v = document.getElementById('apiKeyInput').value.trim();
+  localStorage.setItem(API_KEY_LS, v);
+  updateApiStatus();
+  showToast('API 키가 저장되었습니다.', 'ok');
+}
+function toggleApiVis() {
+  const i = document.getElementById('apiKeyInput');
+  i.type = i.type === 'password' ? 'text' : 'password';
+}
+function saveApiKeyModal() {
+  const v = document.getElementById('apiKeyModal').value.trim();
+  localStorage.setItem(API_KEY_LS, v);
+  document.getElementById('apiKeyInput').value = v;
+  updateApiStatus();
+  closeModal('apiModal');
+  showToast('API 키가 저장되었습니다.', 'ok');
+}
+function toggleApiVisModal() {
+  const i = document.getElementById('apiKeyModal');
+  i.type = i.type === 'password' ? 'text' : 'password';
+}
+
+// ════════════════════════════════════════════════
+//  EXTRACT DATA
+// ════════════════════════════════════════════════
+async function extractData() {
+  const apiKey = localStorage.getItem(API_KEY_LS) || '';
+  if (!apiKey) { showToast('먼저 API 키를 입력해 주세요.', 'err'); return; }
+  if (!uploadedFile) { showToast('먼저 파일을 업로드해 주세요.', 'err'); return; }
+
+  setProgress(true, 5, 'Claude API에 연결 중...');
+
+  try {
+    const prompt = `이 이미지/PDF에서 한자 학습 데이터를 추출해 주세요.
+각 한자에 대해 다음 정보를 JSON 배열로 반환하세요:
+- hanja: 한자 (예: 山)
+- hun: 훈/뜻 (예: 뫼)
+- eum: 음/읽기 (예: 산)
+- busu: 부수 (예: 山)
+- hoeksu: 획수 (숫자, 예: 3)
+- level: 급수 (예: 8)
+
+응답은 반드시 순수 JSON 배열만 반환하세요. 예시:
+[{"hanja":"山","hun":"뫼","eum":"산","busu":"山","hoeksu":"3","level":"8"}]
+
+이미지에서 찾을 수 있는 모든 한자를 추출하세요. 빠진 정보는 빈 문자열로 처리하세요.`;
+
+    setProgress(true, 30, '이미지 분석 중...');
+
+    const isImage = uploadedFile.mediaType.startsWith('image/');
+    const contentBlock = isImage
+      ? { type: 'image', source: { type: 'base64', media_type: uploadedFile.mediaType, data: uploadedFile.base64 } }
+      : { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: uploadedFile.base64 } };
+
+    setProgress(true, 55, 'Claude가 한자를 추출하는 중...');
+
+    const response = await fetch(`${PROXY_BASE}/v1/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: [contentBlock, { type: 'text', text: prompt }] }],
+      }),
+    });
+
+    setProgress(true, 80, '응답 처리 중...');
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.content?.map(b => b.text || '').join('') || '';
+
+    // Parse JSON from response
+    let parsed = [];
+    const match = text.match(/\[[\s\S]*\]/);
+    if (match) {
+      try { parsed = JSON.parse(match[0]); } catch {}
+    }
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      throw new Error('한자 데이터를 추출하지 못했습니다. 이미지를 확인해 주세요.');
+    }
+
+    setProgress(true, 100, `${parsed.length}개 한자 추출 완료!`);
+
+    // Normalize
+    hanjaData = parsed.map(h => ({
+      hanja: h.hanja || '',
+      hun:   h.hun   || '',
+      eum:   h.eum   || '',
+      busu:  h.busu  || '',
+      hoeksu: String(h.hoeksu || ''),
+      level: String(h.level || ''),
+    }));
+
+    setTimeout(() => {
+      setProgress(false);
+      goToStep(2);
+      showToast(`${hanjaData.length}개 한자를 추출했습니다.`, 'ok');
+    }, 800);
+
+  } catch (e) {
+    setProgress(false);
+    showToast('추출 실패: ' + e.message, 'err');
+  }
+}
+
+function setProgress(show, val, text) {
+  const wrap = document.getElementById('progressWrap');
+  wrap.style.display = show ? 'block' : 'none';
+  document.getElementById('progressBar').style.width = val + '%';
+  document.getElementById('progressText').textContent = text || '';
+  document.getElementById('extractBtn').disabled = show;
+}
+
+function loadDemo() {
+  hanjaData = DEMO_DATA.map(h => ({...h}));
+  goToStep(2);
+  showToast('데모 데이터 20개를 불러왔습니다.', 'ok');
+}
+
+// ════════════════════════════════════════════════
+//  EDIT TABLE
+// ════════════════════════════════════════════════
+function renderEditTable() {
+  const body = document.getElementById('editBody');
+  body.innerHTML = '';
+  hanjaData.forEach((h, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="num-col">${i+1}</td>
+      <td><input class="hanja-input" type="text" value="${esc(h.hanja)}" oninput="hanjaData[${i}].hanja=this.value"></td>
+      <td><input type="text" value="${esc(h.hun)}" oninput="hanjaData[${i}].hun=this.value"></td>
+      <td><input type="text" value="${esc(h.eum)}" oninput="hanjaData[${i}].eum=this.value"></td>
+      <td><input type="text" value="${esc(h.busu)}" oninput="hanjaData[${i}].busu=this.value"></td>
+      <td><input type="text" value="${esc(h.hoeksu)}" oninput="hanjaData[${i}].hoeksu=this.value" style="width:50px"></td>
+      <td><input type="text" value="${esc(h.level)}" oninput="hanjaData[${i}].level=this.value" style="width:40px"></td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeRow(${i})">✕</button></td>
+    `;
+    body.appendChild(tr);
+  });
+  document.getElementById('hanjaCount').textContent = `총 ${hanjaData.length}개`;
+}
+
+function addRow() {
+  hanjaData.push({ hanja:'', hun:'', eum:'', busu:'', hoeksu:'', level:'' });
+  renderEditTable();
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#editBody .hanja-input');
+    if (inputs.length) inputs[inputs.length-1].focus();
+  }, 50);
+}
+
+function removeRow(i) {
+  hanjaData.splice(i, 1);
+  renderEditTable();
+}
+
+// ════════════════════════════════════════════════
+//  COLUMN CONFIG
+// ════════════════════════════════════════════════
+function renderColConfig() {
+  const cc = document.getElementById('colConfig');
+  cc.innerHTML = '';
+  colSettings.forEach((col, ci) => {
+    const div = document.createElement('div');
+    div.className = 'col-toggle active';
+    div.innerHTML = `
+      <div class="col-toggle-header">열 ${ci+1}</div>
+      <input type="text" value="${esc(col.label)}" style="width:100%;font-size:0.75rem;border:1px solid var(--border-light);border-radius:4px;padding:3px 6px;margin-bottom:6px;background:#fff;font-family:'Noto Sans KR',sans-serif;text-align:center;" oninput="colSettings[${ci}].label=this.value;renderPreview()">
+      <div class="hide-toggles">
+        ${makeToggle(ci,'hideHanja','한자 숨김')}
+        ${makeToggle(ci,'hideHun','훈 숨김')}
+        ${makeToggle(ci,'hideEum','음 숨김')}
+      </div>
+    `;
+    cc.appendChild(div);
+  });
+}
+
+function makeToggle(ci, key, label) {
+  const checked = colSettings[ci][key] ? 'checked' : '';
+  return `<label class="hide-toggle">
+    <label class="toggle-switch">
+      <input type="checkbox" ${checked} onchange="colSettings[${ci}].${key}=this.checked;renderPreview()">
+      <span class="toggle-slider"></span>
+    </label>
+    <span>${label}</span>
+  </label>`;
+}
+
+// ════════════════════════════════════════════════
+//  PREVIEW / WORKSHEET
+// ════════════════════════════════════════════════
+function renderPreview() {
+  const ws = document.getElementById('worksheet');
+  const title = document.getElementById('wsTitle').value || '한자 학습지';
+  const name = document.getElementById('wsName').value || '';
+
+  if (hanjaData.length === 0) {
+    ws.innerHTML = '<p style="color:var(--text-light);text-align:center;padding:40px;">데이터가 없습니다. 먼저 한자를 추출하거나 데모 데이터를 불러오세요.</p>';
+    return;
+  }
+
+  let html = `
+    <div class="worksheet-header">
+      <div class="ws-title">${esc(title)}</div>
+      <div class="ws-name">이름: <span>${esc(name)}</span> &nbsp; 날짜: <span></span></div>
+    </div>
+    <table class="ws-table">
+      <thead>
+        <tr>
+          <th class="ws-num" style="width:28px">#</th>
+          ${colSettings.map(c => `<th>${esc(c.label)}</th>`).join('')}
+          <th class="ws-grade" style="width:28px">급</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  hanjaData.forEach((h, i) => {
+    // Section divider every 10 rows
+    if (i > 0 && i % 10 === 0) {
+      html += `<tr class="ws-section-row"><td colspan="9">▸ ${i+1}번~${Math.min(i+10, hanjaData.length)}번</td></tr>`;
+    }
+    html += `<tr>
+      <td class="ws-num">${i+1}</td>
+      ${colSettings.map(col => `<td class="ws-cell">${renderCell(h, col)}</td>`).join('')}
+      <td class="ws-grade">${esc(h.level)}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  ws.innerHTML = html;
+}
+
+function renderCell(h, col) {
+  const hanjaDisplay = col.hideHanja
+    ? `<span class="ws-blank-char"></span>`
+    : `<span class="ws-hanja">${esc(h.hanja)}</span>`;
+
+  const hunDisplay = col.hideHun
+    ? `<span class="ws-blank-text"></span>`
+    : esc(h.hun);
+
+  const eumDisplay = col.hideEum
+    ? `<span class="ws-blank-text"></span>`
+    : esc(h.eum);
+
+  const infoLine = (col.hideHun && col.hideEum)
+    ? '' : `<span class="ws-info">${hunDisplay} ${eumDisplay}</span>`;
+
+  return hanjaDisplay + (infoLine ? '<br>' + infoLine : '');
+}
+
+// ════════════════════════════════════════════════
+//  STEP NAVIGATION
+// ════════════════════════════════════════════════
+function goToStep(n) {
+  if (n === 2 && hanjaData.length === 0) {
+    showToast('먼저 데이터를 추출하거나 데모 데이터를 불러오세요.', 'err');
+    return;
+  }
+  if (n === 2) { renderEditTable(); renderColConfig(); }
+  if (n === 3) renderPreview();
+
+  currentStep = n;
+  ['sec1','sec2','sec3'].forEach((id, idx) => {
+    document.getElementById(id).classList.toggle('show', idx+1 === n);
+  });
+  [1,2,3].forEach(idx => {
+    const el = document.getElementById(`step${idx}-ind`);
+    el.classList.remove('active','done');
+    if (idx < n) el.classList.add('done');
+    else if (idx === n) el.classList.add('active');
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// live preview
+document.addEventListener('DOMContentLoaded', () => {
+  const wsTitle = document.getElementById('wsTitle');
+  const wsName  = document.getElementById('wsName');
+  if (wsTitle) wsTitle.addEventListener('input', renderPreview);
+  if (wsName)  wsName.addEventListener('input', renderPreview);
+});
+
+// ════════════════════════════════════════════════
+//  MODALS
+// ════════════════════════════════════════════════
+function openApiModal() {
+  document.getElementById('apiKeyModal').value = localStorage.getItem(API_KEY_LS) || '';
+  openModal('apiModal');
+}
+function openWorkerModal() { openModal('workerModal'); }
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('show');
+});
+
+function setWorkerCode() {
+  document.getElementById('workerCode').textContent = `// ─── 한자 학습지 생성기 — Worker 추가 코드 ───
+// 기존 Worker 코드의 fetch 핸들러 안에 아래 라우트를 추가하세요
+
+const STORE = new Map(); // 임시 저장소 (메모리)
+
+// POST /upload/:sid  — 모바일에서 이미지 전송
+if (req.method === 'POST' && path.startsWith('/upload/')) {
+  const sid = path.replace('/upload/', '').split('/')[0];
+  const body = await req.json();
+  STORE.set(sid, { ...body, ts: Date.now() });
+  // 60초 후 자동 삭제
+  setTimeout(() => STORE.delete(sid), 60000);
+  return new Response('ok', { headers: corsHeaders });
+}
+
+// GET /poll/:sid  — PC에서 폴링
+if (req.method === 'GET' && path.startsWith('/poll/')) {
+  const sid = path.replace('/poll/', '').split('/')[0];
+  const data = STORE.get(sid);
+  if (data) {
+    STORE.delete(sid);
+    return new Response(JSON.stringify(data), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+  return new Response('{}', {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  });
+}`;
+}
+
+function copyWorkerCode() {
+  const code = document.getElementById('workerCode').textContent;
+  navigator.clipboard.writeText(code).then(() => showToast('코드가 복사되었습니다!', 'ok'));
+}
+
+// ════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show toast-${type}`;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
