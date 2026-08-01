@@ -207,7 +207,7 @@ body.edit-mode .he-zone.hid,body.edit-mode .hj-zone.hid{color:inherit!important;
           API 키
         </div>
         <div class="key-row">
-          <input type="password" id="keyGemini" placeholder="AIza...">
+          <input type="password" id="keyGemini" placeholder="Gemini API 키 입력">
           <button class="btn btn-o btn-sm" onclick="togVis('keyGemini')">보기</button>
           <button class="btn btn-o btn-sm" onclick="saveKey()">저장</button>
         </div>
@@ -392,8 +392,7 @@ const DEMO = [
 
 function updateKeySt(val){
   const el=document.getElementById('keySt');
-  if(val.startsWith('AIza')){ el.textContent='✓ 저장됨'; el.className='key-st ok'; }
-  else if(val){ el.textContent='⚠ 형식 확인 (AIza로 시작해야 함)'; el.className='key-st err'; }
+  if(val){ el.textContent='✓ 저장됨'; el.className='key-st ok'; }
   else{ el.textContent='⚠ 키 없음 — 아래 링크에서 발급'; el.className='key-st err'; }
 }
 function saveKey(){
