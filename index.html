@@ -258,7 +258,7 @@ body.edit-mode .he-zone.hid,body.edit-mode .hj-zone.hid{color:inherit!important;
     <div class="prog-outer" id="progOuter">
       <div class="prog-steps">
         <span class="ps" id="ps1">1. 이미지 변환</span>
-        <span class="ps" id="ps2">2. 한글 OCR</span>
+        <span class="ps" id="ps2">2. 표 읽기</span>
         <span class="ps" id="ps3">3. 한자 확정</span>
         <span class="ps" id="ps4">4. 교차검증</span>
       </div>
@@ -375,8 +375,6 @@ const DEMO = [
   setupDrop();
   document.addEventListener('paste', onPaste);
   document.getElementById('fileIn').addEventListener('change', e=>{ if(e.target.files[0]) handleFile(e.target.files[0]); });
-  document.getElementById('mobCam').addEventListener('change', e=>{ if(e.target.files[0]) sendMob(e.target.files[0]); });
-  document.getElementById('mobGal').addEventListener('change', e=>{ if(e.target.files[0]) sendMob(e.target.files[0]); });
   document.addEventListener('keydown', e=>{
     if(e.key==='Escape') closePopup();
     if(e.ctrlKey&&e.key==='p'){ e.preventDefault(); if(document.getElementById('secWs').classList.contains('show')) window.print(); }
@@ -501,66 +499,262 @@ async function showQR(){
 function hideQR(){ stopPoll(); document.getElementById('qrArea').classList.remove('show'); }
 function stopPoll(){ if(pollIv){ clearInterval(pollIv); pollIv=null; } }
 
-// ── PDF → IMAGE ──
-async function pdfToImage(b64pdf){
-  if(!window.pdfjsLib){
-    await new Promise((res,rej)=>{
-      const s=document.createElement('script');
-      s.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
-      s.onload=res; s.onerror=rej; document.head.appendChild(s);
-    });
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+// ══════════════════════════════════════════════════════
+//  PDF → 페이지별 개별 이미지 (★ 세로로 이어붙이지 않음)
+//  이어붙이면 다운샘플링 때문에 글자당 해상도가 붕괴한다.
+// ══════════════════════════════════════════════════════
+const IMG_MAX_SIDE = 3072;              // 긴 변 상한
+const IMG_MAX_BYTES = 4 * 1024 * 1024;  // 인라인 이미지 상한
+
+async function loadPdfJs(){
+  if(window.pdfjsLib) return;
+  await new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+    s.onload=res; s.onerror=rej; document.head.appendChild(s);
+  });
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+}
+function canvasToPart(cv){
+  let out=cv;
+  const long=Math.max(cv.width,cv.height);
+  if(long>IMG_MAX_SIDE){                       // 고배율 렌더 후 축소 = 슈퍼샘플링으로 글자가 선명해짐
+    const sc=IMG_MAX_SIDE/long;
+    out=document.createElement('canvas');
+    out.width=Math.round(cv.width*sc); out.height=Math.round(cv.height*sc);
+    const c=out.getContext('2d');
+    c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high';
+    c.fillStyle='#fff'; c.fillRect(0,0,out.width,out.height);
+    c.drawImage(cv,0,0,out.width,out.height);
   }
+  let q=0.92, url=out.toDataURL('image/jpeg',q);
+  while(url.length*0.75>IMG_MAX_BYTES && q>0.4){ q-=0.08; url=out.toDataURL('image/jpeg',q); }
+  return {inline_data:{mime_type:'image/jpeg', data:url.split(',')[1]}};
+}
+async function pdfToPageParts(b64pdf, onProg){
+  await loadPdfJs();
   const bin=atob(b64pdf), arr=new Uint8Array(bin.length);
   for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
   const pdf=await window.pdfjsLib.getDocument({data:arr}).promise;
-  const pages=[];
+  const parts=[];
   for(let i=1;i<=pdf.numPages;i++){
+    onProg && onProg(i, pdf.numPages);
     const page=await pdf.getPage(i);
-    const vp=page.getViewport({scale:2.2});
+    const vp=page.getViewport({scale:3});
     const cv=document.createElement('canvas');
     cv.width=vp.width; cv.height=vp.height;
     const ctx=cv.getContext('2d');
     ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,cv.height);
     await page.render({canvasContext:ctx,viewport:vp}).promise;
-    pages.push(cv);
+    parts.push(canvasToPart(cv));
   }
-  const totalH=pages.reduce((s,c)=>s+c.height,0), maxW=Math.max(...pages.map(c=>c.width));
-  const out=document.createElement('canvas');
-  out.width=maxW; out.height=totalH;
-  const octx=out.getContext('2d');
-  octx.fillStyle='#fff'; octx.fillRect(0,0,maxW,totalH);
-  let y=0; for(const c of pages){ octx.drawImage(c,0,y); y+=c.height; }
-  // 5MB 이하로 압축
-  const MAX=4.5*1024*1024;
-  let q=0.88, url=out.toDataURL('image/jpeg',q);
-  while(url.length*0.75>MAX&&q>0.3){ q-=0.1; url=out.toDataURL('image/jpeg',q); }
-  if(url.length*0.75>MAX){
-    const sc=Math.sqrt(MAX/(url.length*0.75));
-    const sm=document.createElement('canvas');
-    sm.width=Math.floor(out.width*sc); sm.height=Math.floor(out.height*sc);
-    sm.getContext('2d').drawImage(out,0,0,sm.width,sm.height);
-    url=sm.toDataURL('image/jpeg',0.88);
-  }
-  return {base64:url.split(',')[1], mediaType:'image/jpeg'};
+  return parts;
 }
 
-// ── GEMINI 호출 ──
-async function callGemini(gk, parts, maxTokens=8192){
-  const r=await fetch(`${G_URL}?key=${gk}`,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      contents:[{parts}],
-      generationConfig:{temperature:0, maxOutputTokens:maxTokens}
-    })
-  });
+// ══════════════════════════════════════════════════════
+//  GEMINI 호출 — 절단(MAX_TOKENS) 감지 + 전체 파트 결합
+// ══════════════════════════════════════════════════════
+class TruncErr extends Error{
+  constructor(partial){ super('Gemini 응답이 토큰 한도에서 잘렸습니다'); this.name='TruncErr'; this.partial=partial||''; }
+}
+let THINK_OK = true;   // thinkingConfig 지원 여부 (1회 거부되면 이후 생략)
+
+async function callGemini(gk, parts, maxTokens=32768, thinkLevel='low'){
+  const mkBody=()=>{
+    const gc={temperature:0, maxOutputTokens:maxTokens};
+    // 사고 토큰도 maxOutputTokens에 포함되므로 사고 예산을 낮춰 출력 여유를 확보
+    if(THINK_OK && thinkLevel) gc.thinkingConfig={thinkingLevel:thinkLevel};
+    return JSON.stringify({contents:[{role:'user',parts}], generationConfig:gc});
+  };
+  const post=b=>fetch(`${G_URL}?key=${gk}`,{method:'POST',headers:{'Content-Type':'application/json'},body:b});
+
+  let r=await post(mkBody());
   if(!r.ok){
     const e=await r.json().catch(()=>({}));
-    throw new Error('Gemini 오류: '+(e?.error?.message||r.status));
+    const msg=e?.error?.message||('HTTP '+r.status);
+    if(THINK_OK && /thinking/i.test(msg)){
+      THINK_OK=false;
+      r=await post(mkBody());
+      if(!r.ok){
+        const e2=await r.json().catch(()=>({}));
+        throw new Error('Gemini 오류: '+(e2?.error?.message||('HTTP '+r.status)));
+      }
+    } else throw new Error('Gemini 오류: '+msg);
   }
   const d=await r.json();
-  return (d.candidates?.[0]?.content?.parts?.[0]?.text||'').trim();
+  const cand=d.candidates?.[0];
+  const fin=cand?.finishReason||'';
+  const text=(cand?.content?.parts||[])
+    .filter(p=>!p.thought && typeof p.text==='string')   // 사고 파트 제외, 나머지 전부 결합
+    .map(p=>p.text).join('').trim();
+  if(fin==='MAX_TOKENS') throw new TruncErr(text);        // ★ 잘린 응답을 성공으로 취급하지 않는다
+  if(fin && fin!=='STOP')
+    throw new Error('Gemini 중단: '+fin+(d.promptFeedback?.blockReason?` (${d.promptFeedback.blockReason})`:''));
+  if(!text) throw new Error('Gemini 빈 응답');
+  return text;
+}
+
+// ── 동시 실행 풀 ──
+function pool(items, limit, fn){
+  return new Promise((resolve,reject)=>{
+    if(!items.length) return resolve([]);
+    const out=new Array(items.length);
+    let i=0, active=0, done=0, failed=false;
+    const next=()=>{
+      if(failed) return;
+      if(done===items.length) return resolve(out);
+      while(active<limit && i<items.length){
+        const idx=i++; active++;
+        Promise.resolve(fn(items[idx],idx))
+          .then(v=>{ out[idx]=v; }, e=>{ failed=true; reject(e); })
+          .then(()=>{ active--; done++; if(!failed) next(); });
+      }
+    };
+    next();
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  표 읽기 — 구조 파악 → 행 구간 분할 → 개수 검증
+// ══════════════════════════════════════════════════════
+const MAX_CELLS = 48;   // 1회 호출당 최대 칸 수 (출력 절단 + 주의력 분산 방지)
+
+async function probeGrid(gk, imgPart){
+  let t;
+  try{
+    t=await callGemini(gk,[imgPart,{text:
+`이 이미지는 한자 표(배정한자표 또는 한자 학습지)입니다.
+격자 구조만 파악해서 JSON 객체 하나만 출력하세요.
+
+{"rows":행수,"cols":열수,"level":"급수"}
+
+- rows / cols : 한자가 들어 있는 데이터 칸의 행 수와 열 수.
+  번호 열·급수 열·머리글 행처럼 한자가 없는 줄은 세지 마세요.
+- level : 표 제목이나 표 안에 적힌 급수 (예 "준6급", "6급", "8급"). 없으면 "".
+
+JSON만 출력. 설명 금지.`}], 8192);
+  }catch(e){ if(e instanceof TruncErr) t=e.partial; else throw e; }
+  const m=t && t.match(/\{[\s\S]*?\}/);
+  if(!m) return null;
+  try{
+    const o=JSON.parse(m[0]);
+    const rows=parseInt(o.rows,10), cols=parseInt(o.cols,10);
+    if(rows>0 && cols>0 && rows*cols<=600)
+      return {rows,cols,level:String(o.level||'').trim()};
+  }catch{}
+  return null;
+}
+
+function parseCellLines(txt, rowOffset){
+  const out=[];
+  for(const raw of String(txt||'').split('\n')){
+    const line=raw.trim();
+    if(!line || !line.includes('|')) continue;
+    const p=line.split('|').map(s=>s.trim());
+    if(p.length<4) continue;
+    const rn=parseInt(p[0].replace(/[^0-9]/g,''),10);
+    const hanja=p[1].replace(/[^㐀-䶿一-鿿豈-﫿]/g,'');
+    const hun=p[2], eum=p[3], level=(p[4]||'').trim();
+    if(hun==='훈' || p[1]==='한자') continue;          // 머리글 되풀이 제거
+    if(!hanja && !(hun&&eum)) continue;                 // 빈 칸
+    out.push({row:isNaN(rn)?rowOffset:rn, hanja, hun, eum, level});
+  }
+  return out;
+}
+
+async function readRows(gk, imgPart, g, r1, r2){
+  const expect=(r2-r1+1)*g.cols;
+  const txt=await callGemini(gk,[imgPart,{text:
+`이 이미지는 한자 표입니다. 데이터 영역은 ${g.rows}행 × ${g.cols}열입니다.
+각 칸에는 큰 한자 1자와 작은 한글(훈+음)이 함께 들어 있습니다.
+한자가 위에 있는 표도 있고 아래에 있는 표도 있으니, 이미지를 보고 직접 판단하세요.
+
+이번에는 **${r1}행부터 ${r2}행까지만** 읽으세요. 맨 위 데이터 행이 1행입니다.
+각 행을 왼쪽 → 오른쪽 순서로, ${g.cols}칸 전부.
+
+출력 형식 — 한 칸당 정확히 한 줄, 다른 텍스트 절대 금지:
+행번호|한자|훈|음|급수
+
+- 훈 = 뜻 (예: 오를, 아름다울, 고기잡을)
+- 음 = 읽기 (예: 등, 미, 어)
+- 급수 = 그 칸이나 그 행에 급수가 따로 적혀 있을 때만. 없으면 비워 두세요.
+- 빈 칸도 건너뛰지 말고 "행번호||||" 형태로 한 줄 출력하세요.
+- 총 ${expect}줄을 출력해야 합니다.`}], 32768);
+  return parseCellLines(txt, r1);
+}
+
+// 부족하거나 잘리면 구간을 절반으로 쪼개 재시도
+async function readRange(gk, imgPart, g, r1, r2, depth=0){
+  const expect=(r2-r1+1)*g.cols;
+  try{
+    const got=await readRows(gk,imgPart,g,r1,r2);
+    if(got.length>=expect*0.9 || r1===r2 || depth>=3) return got;
+    console.warn(`[재시도] ${r1}~${r2}행: ${expect}칸 기대, ${got.length}칸 수신`);
+  }catch(e){
+    if(!(e instanceof TruncErr) || r1===r2 || depth>=3) throw e;
+    console.warn(`[재시도] ${r1}~${r2}행: 응답 절단`);
+  }
+  const mid=Math.floor((r1+r2)/2);
+  const a=await readRange(gk,imgPart,g,r1,mid,depth+1);
+  const b=await readRange(gk,imgPart,g,mid+1,r2,depth+1);
+  return a.concat(b);
+}
+
+// 구조 파악 실패 시 폴백 — 통째로 한 번에
+async function readWhole(gk, imgPart){
+  let txt;
+  try{
+    txt=await callGemini(gk,[imgPart,{text:
+`이 이미지의 한자 표에 있는 모든 칸을 빠짐없이 읽으세요.
+각 칸에는 한자 1자와 한글(훈+음)이 함께 있습니다.
+표 순서대로(왼→오, 위→아래).
+
+출력 — 한 칸당 한 줄, 다른 텍스트 금지:
+행번호|한자|훈|음|급수
+
+급수가 표에 없으면 비워 두세요. 한 칸도 빠뜨리지 마세요.`}], 49152);
+  }catch(e){
+    if(e instanceof TruncErr){ console.warn('폴백 읽기 절단 — 부분 결과 사용'); txt=e.partial; }
+    else throw e;
+  }
+  return parseCellLines(txt,1);
+}
+
+// ── 훈/음 → 한자 확정 (지식 기반, 이미지 없이) ──
+function parseIdxHanja(txt){
+  const m=String(txt||'').match(/\[[\s\S]*\]/);
+  if(!m) return [];
+  try{
+    const a=JSON.parse(m[0]);
+    return Array.isArray(a)?a:[];
+  }catch{ return []; }
+}
+async function confirmHanja(gk, list, level){
+  const s=list.map((k,i)=>`${i+1}. 훈="${k.hun}" 음="${k.eum}"`).join('\n');
+  const txt=await callGemini(gk,[{text:
+`아래는 한국 한자능력검정 ${level||''} 학습지에서 읽은 훈(뜻)/음(읽기) 목록입니다.
+각 항목의 훈+음에 정확히 대응하는 표준 한자를 확정하세요.
+
+${s}
+
+JSON 배열만 출력하세요. 설명 금지. ${list.length}개 항목을 번호 순서대로 모두 포함:
+[{"i":1,"hanja":"登"},{"i":2,"hanja":"心"}]`}], 16384);
+  return parseIdxHanja(txt);
+}
+
+// ── 불일치 항목만 이미지로 재판정 ──
+async function arbitrate(gk, imgPart, items){
+  const s=items.map((x,i)=>`${i+1}. 훈="${x.c.hun}" 음="${x.c.eum}" → 후보A(글자판독):${x.c.hanja}  후보B(훈음추정):${x.k}`).join('\n');
+  const txt=await callGemini(gk,[imgPart,{text:
+`이미지의 한자 표에서 아래 항목의 한자가 실제로 무엇인지 확인하세요.
+글자 판독 결과와 훈/음 기반 추정이 서로 다릅니다.
+
+${s}
+
+이미지에 실제로 인쇄된 글자를 기준으로 하나를 고르거나, 둘 다 아니면 올바른 한자를 쓰세요.
+JSON 배열만 출력:
+[{"i":1,"hanja":"登"}]`}], 8192);
+  return parseIdxHanja(txt);
 }
 
 // ── PROGRESS ──
@@ -576,111 +770,129 @@ async function extract(){
   document.getElementById('progOuter').style.display='block';
   document.getElementById('extBtn').disabled=true;
 
+  const warns=[];
   try{
-    // ── STEP 1: 이미지 변환 ──
-    setPS(1); setProg(8,'이미지 변환 중...');
-    let imgB64, imgMT;
+    // ── STEP 1: 페이지별 이미지 변환 ──
+    setPS(1); setProg(5,'이미지 변환 중...');
+    let pageParts;
     if(uploadedFile.mediaType.startsWith('image/')){
-      imgB64=uploadedFile.base64; imgMT=uploadedFile.mediaType;
+      pageParts=[{inline_data:{mime_type:uploadedFile.mediaType, data:uploadedFile.base64}}];
     } else {
-      const cv=await pdfToImage(uploadedFile.base64);
-      imgB64=cv.base64; imgMT=cv.mediaType;
+      pageParts=await pdfToPageParts(uploadedFile.base64,
+        (i,n)=>setProg(5+Math.round(10*i/n), `PDF 페이지 변환 ${i}/${n}`));
     }
-    const imgPart={inline_data:{mime_type:imgMT, data:imgB64}};
+    setProg(16, `${pageParts.length}쪽 준비 완료`);
 
-    // ── STEP 2: 한글 OCR (한자 무시, 훈/음만) ──
-    setPS(2); setProg(28,'한글 훈/음 읽는 중...');
-    const ocrText = await callGemini(gk, [
-      imgPart,
-      {text:`이 이미지는 한자 학습지 표입니다.
-
-표 구조:
-- 맨 왼쪽 열: 행번호 → 무시
-- 가운데 6열(①~⑥): 위쪽=작은 한글(훈+음), 아래쪽=큰 한자
-- 맨 오른쪽 열: 급수 숫자
-
-할 일: 가운데 6열의 각 칸, 위쪽 작은 한글만 읽으세요. 한자는 무시.
-
-출력 형식 (한 줄=한 칸, 설명 없이):
-훈|음|급수
-
-표 순서대로(왼→오, 위→아래). 빈 칸 건너뜀.
-급수는 해당 행 오른쪽 끝 숫자.
-이 형식 외 다른 텍스트 없이.`}
-    ], 4096);
-
-    // 파이프 파싱
-    const ocrList=[];
-    for(const line of ocrText.split('\n')){
-      const p=line.trim().split('|');
-      if(p.length<2) continue;
-      const hun=p[0].trim(), eum=p[1].trim(), level=(p[2]||'').replace(/[^0-9]/g,'');
-      if(!hun||!eum||hun==='훈'||/^\d+[~\-]\d+$/.test(hun)||hun==='번호') continue;
-      ocrList.push({hun,eum,level});
+    // ── STEP 2: 표 구조 파악 → 행 구간 분할 읽기 ──
+    setPS(2);
+    let cells=[];                                  // {page,hanja,hun,eum,level}
+    const span=38/pageParts.length;
+    for(let p=0;p<pageParts.length;p++){
+      const base=18+span*p;
+      setProg(base, `표 구조 파악 중... (${p+1}/${pageParts.length}쪽)`);
+      const g=await probeGrid(gk, pageParts[p]);
+      let got;
+      if(g){
+        const rpc=Math.max(1, Math.floor(MAX_CELLS/g.cols));
+        const ranges=[];
+        for(let r=1;r<=g.rows;r+=rpc) ranges.push([r, Math.min(r+rpc-1, g.rows)]);
+        setProg(base+span*0.15, `${p+1}쪽 ${g.rows}행×${g.cols}열 — ${ranges.length}구간 읽는 중`);
+        let fin=0;
+        const res=await pool(ranges, 3, async(rg)=>{
+          const v=await readRange(gk, pageParts[p], g, rg[0], rg[1]);
+          fin++; setProg(base+span*(0.15+0.85*fin/ranges.length), `${p+1}쪽 읽는 중 ${fin}/${ranges.length}구간`);
+          return v;
+        });
+        got=res.flat();
+        const expect=g.rows*g.cols;
+        if(got.length<expect) warns.push(`${p+1}쪽: ${expect}칸 중 ${got.length}칸만 읽힘`);
+        got.forEach(c=>{ if(!c.level) c.level=g.level; });   // 제목에 적힌 급수를 기본값으로
+      } else {
+        warns.push(`${p+1}쪽: 표 구조 인식 실패 — 통째로 읽음`);
+        got=await readWhole(gk, pageParts[p]);
+      }
+      got.forEach(c=>{ c.page=p; });
+      cells=cells.concat(got);
     }
-    if(!ocrList.length) throw new Error('한글 읽기 실패. 이미지를 확인하세요.');
-    setProg(52,`${ocrList.length}개 한글 읽음`);
+    if(!cells.length) throw new Error('표를 읽지 못했습니다. 이미지 품질을 확인해 주세요.');
+    setProg(58, `${cells.length}칸 읽음`);
 
-    // ── STEP 3: 훈/음 → 한자 확정 (이미지 없이 순수 지식으로) ──
-    setPS(3); setProg(68,'한자 확정 중...');
-    const listStr=ocrList.map((k,i)=>`${i+1}. 훈="${k.hun}" 음="${k.eum}"`).join('\n');
-    const hanjaText = await callGemini(gk, [
-      {text:`아래는 한자 학습지의 훈(뜻)과 음(읽기) 목록입니다.
-각 항목의 훈+음에 정확히 대응하는 한국 한자교육 표준 한자를 확정하세요.
+    // ── STEP 3: 훈/음 → 한자 확정 (지식 기반, 독립 검증용) ──
+    setPS(3); setProg(60,'한자 확정 중...');
+    const sheetLevel=cells.find(c=>c.level)?.level||'';
+    const needKb=cells.map((c,i)=>({i,hun:c.hun,eum:c.eum})).filter(x=>x.hun&&x.eum);
+    const kbChunks=[];
+    for(let i=0;i<needKb.length;i+=60) kbChunks.push(needKb.slice(i,i+60));
+    let kbFin=0;
+    const kbRes=await pool(kbChunks, 3, async(ch)=>{
+      let r=[];
+      try{ r=await confirmHanja(gk, ch, sheetLevel); }
+      catch(e){ warns.push('한자 확정 일부 실패: '+e.message); }
+      kbFin++; setProg(60+Math.round(18*kbFin/kbChunks.length), `한자 확정 ${kbFin}/${kbChunks.length}`);
+      return r;
+    });
+    const kb={};                                   // 전역 인덱스 → 지식 기반 한자
+    kbRes.forEach((arr,ci)=>{
+      (arr||[]).forEach(o=>{
+        const g=kbChunks[ci][parseInt(o.i,10)-1];
+        if(g && o.hanja) kb[g.i]=String(o.hanja).trim().slice(0,4);
+      });
+    });
 
-${listStr}
+    // ── STEP 4: 불일치 항목만 이미지로 재판정 (★ 전체를 덮어쓰지 않음) ──
+    setPS(4); setProg(80,'교차검증 중...');
+    const conflicts=[];
+    cells.forEach((c,i)=>{
+      const k=kb[i];
+      if(!c.hanja && k){ c.hanja=k; return; }       // 글자 판독 실패분을 지식으로 보완
+      if(k && c.hanja && k!==c.hanja) conflicts.push({i, c, k});
+    });
+    if(conflicts.length){
+      const byPage={};
+      conflicts.forEach(x=>{ (byPage[x.c.page]=byPage[x.c.page]||[]).push(x); });
+      const jobs=[];
+      Object.keys(byPage).forEach(p=>{
+        for(let i=0;i<byPage[p].length;i+=25) jobs.push({p:+p, items:byPage[p].slice(i,i+25)});
+      });
+      let vFin=0;
+      const vres=await pool(jobs, 2, async(j)=>{
+        let r=[];
+        try{ r=await arbitrate(gk, pageParts[j.p], j.items); }
+        catch(e){ warns.push('교차검증 일부 실패: '+e.message); }
+        vFin++; setProg(80+Math.round(15*vFin/jobs.length), `교차검증 ${vFin}/${jobs.length}`);
+        return {j, r};
+      });
+      vres.forEach(v=>{
+        if(!v) return;
+        (v.r||[]).forEach(o=>{
+          const it=v.j.items[parseInt(o.i,10)-1];
+          if(it && o.hanja) cells[it.i].hanja=String(o.hanja).trim().slice(0,4);
+        });
+      });
+      warns.push(`판독/추정 불일치 ${conflicts.length}건을 이미지로 재확인함`);
+    }
 
-JSON 배열만 반환 (다른 텍스트 없이):
-[{"hanja":"山","hun":"뫼","eum":"산","level":"8"},...]
-
-level 원본: ${JSON.stringify(ocrList.map(k=>k.level))}
-
-규칙:
-- 훈+음 조합으로 한자 100% 확정
-- 모든 항목 빠짐없이 포함
-- JSON 배열만 출력`}
-    ]);
-
-    let step3=[];
-    const m3=hanjaText.match(/\[[\s\S]*\]/);
-    if(m3){ try{ step3=JSON.parse(m3[0]); }catch{} }
-    if(!step3.length) throw new Error('한자 확정 실패. 다시 시도해 주세요.');
-    setProg(82,`${step3.length}개 확정`);
-
-    // ── STEP 4: 교차검증 (이미지 + 확정결과 비교) ──
-    setPS(4); setProg(90,'교차검증 중...');
-    const verifyStr=step3.map((h,i)=>`${i+1}. 한자:${h.hanja} 훈:${h.hun} 음:${h.eum}`).join('\n');
-    const verifyText = await callGemini(gk, [
-      imgPart,
-      {text:`아래는 이미지에서 추출한 한자 데이터입니다:
-
-${verifyStr}
-
-이미지의 각 칸 위쪽 한글(훈/음)과 대조해서 틀린 한자는 수정하세요.
-순서도 이미지 표 순서(왼→오, 위→아래)와 맞는지 확인하세요.
-
-JSON 배열만 반환:
-[{"hanja":"山","hun":"뫼","eum":"산","level":"8"},...]
-
-맞으면 그대로. JSON만 출력.`}
-    ]);
-
-    let finalData=step3;
-    const mv=verifyText.match(/\[[\s\S]*\]/);
-    if(mv){ try{ const v=JSON.parse(mv[0]); if(Array.isArray(v)&&v.length>0) finalData=v; }catch{} }
-
-    setProg(100,`✅ ${finalData.length}개 완료!`);
-    hanjaData=finalData.map(h=>({hanja:h.hanja||'',hun:h.hun||'',eum:h.eum||'',level:String(h.level||'')}));
+    // ── 마무리 ──
+    hanjaData=cells.filter(c=>c.hanja).map(c=>({
+      hanja:c.hanja, hun:c.hun||'', eum:c.eum||'', level:String(c.level||'')
+    }));
+    if(!hanjaData.length) throw new Error('한자를 확정하지 못했습니다.');
+    setProg(100,`✅ ${hanjaData.length}개 완료!`);
+    if(warns.length) console.warn('[추출 경고]\n'+warns.join('\n'));
     setTimeout(()=>{
       document.getElementById('progOuter').style.display='none';
       document.getElementById('extBtn').disabled=false;
       renderWS(); showSec('secWs');
-      showToast(`✅ ${hanjaData.length}개 추출 완료!`,'ok');
+      const miss=warns.filter(w=>w.includes('만 읽힘')||w.includes('실패'));
+      showToast(miss.length
+        ? `⚠ ${hanjaData.length}개 추출 (${miss[0]}) — 콘솔 확인`
+        : `✅ ${hanjaData.length}개 추출 완료!`, miss.length?'err':'ok');
     },600);
 
   }catch(e){
     document.getElementById('progOuter').style.display='none';
     document.getElementById('extBtn').disabled=false;
+    if(warns.length) console.warn('[추출 경고]\n'+warns.join('\n'));
     showToast('실패: '+e.message,'err');
   }
 }
@@ -711,7 +923,7 @@ function renderWS(){
       </div>`;
       tr.appendChild(td);
     }
-    const gtd=document.createElement('td'); gtd.className='grd-td'; gtd.textContent=row[0]?.level||''; tr.appendChild(gtd);
+    const gtd=document.createElement('td'); gtd.className='grd-td'; gtd.textContent=(row.find(h=>h&&h.level)||{}).level||''; tr.appendChild(gtd);
     body.appendChild(tr);
   }
 }
